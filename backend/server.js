@@ -8,10 +8,20 @@ import notificationRouter from './src/routes/notificationRoutes.js';
 import authRouter from './src/routes/authRoutes.js'; // Auth routes
 import transactionRouter from './src/routes/transactionRoutes.js'; // Transaction routes
 import errorHandler from './src/errorHandler.js'; // Error handler middleware
+import http from 'http'; // Required for Socket.IO
+import { Server } from 'socket.io'; // Importing Socket.IO
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app); // Create HTTP server for Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5000', // Your frontend URL
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+  },
+});
 
 // Middleware to handle validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -24,7 +34,7 @@ const handleValidationErrors = (req, res, next) => {
 
 // CORS Configuration
 const corsOptions = {
-    origin: 'http://localhost:500', // Replace with your frontend URL
+    origin: 'http://localhost:5000',
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
     credentials: true, // Allow cookies to be sent
     optionsSuccessStatus: 200 // For legacy browser support
@@ -49,10 +59,23 @@ app.use('/api/auth', authRouter);
 app.use('/api/transactions', transactionRouter);
 app.use('/api/notifications', notificationRouter);
 
+// Socket.IO real-time notifications
+io.on('connection', (socket) => {
+  console.log('New client connected:', socket.id);
+
+  // Emit test notification every 60 seconds
+  setInterval(() => {
+    socket.emit('transactionReminder', { message: 'You have a new recurring transaction!' });
+  }, 60000);
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
 // Error handling
 app.use(errorHandler);
 
 // Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
