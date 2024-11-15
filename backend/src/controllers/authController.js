@@ -4,7 +4,7 @@ import User from '../models/User.js';
 
 // Register user
 export const registerUser = async (req, res) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, confirmPassword, telephone } = req.body;
 
     try {
         // Check if user already exists
@@ -18,6 +18,8 @@ export const registerUser = async (req, res) => {
             username,
             email,
             password,
+            confirmPassword,
+            telephone,
         });
 
         // Save user to database
