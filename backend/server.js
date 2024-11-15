@@ -47,7 +47,7 @@ app.use(morgan('dev'));
 app.use(handleValidationErrors); // Add validation error handling middleware
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log("MongoDB connected successfully"))
     .catch((err) => console.error("MongoDB connection error:", err));
 // Routes
