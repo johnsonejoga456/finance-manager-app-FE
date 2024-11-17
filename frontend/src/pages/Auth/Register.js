@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { register } from '../../api/auth';
+import { registerUser } from '../../api/auth';
 
 const Register = () => {
   const [form, setForm] = useState({
-    fullName: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
+    telephone: '',
   });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -18,19 +19,21 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check if passwords match
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
     try {
-      await register({
-        fullName: form.fullName,
-        email: form.email,
-        password: form.password,
-      });
-      navigate('/login'); // Redirect to login on success
+      // Call the backend to register the user
+      await registerUser(form)
+      // Navigate to the login page upon successful registration
+      navigate('/login');
     } catch (err) {
+      // Display error message from the backend or a generic one
+      console.error('Registration error:', err);
       setError(err.response?.data?.message || 'Registration failed');
     }
   };
@@ -41,11 +44,11 @@ const Register = () => {
         <h1 className="text-2xl font-semibold mb-6">Register</h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <div className="mb-4">
-          <label className="block text-gray-700">Full Name</label>
+          <label className="block text-gray-700">Username</label>
           <input
             type="text"
-            name="fullName"
-            value={form.fullName}
+            name="username"
+            value={form.username}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded"
             required
@@ -57,6 +60,17 @@ const Register = () => {
             type="email"
             name="email"
             value={form.email}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700">Telephone</label>
+          <input
+            type="text"
+            name="telephone"
+            value={form.telephone}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded"
             required

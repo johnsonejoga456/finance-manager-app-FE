@@ -5,7 +5,7 @@ import authMiddleware from '../middleware/auth.js'; // JWT verification middlewa
 const authRouter = express.Router();
 
 // Register a new user
-authRouter.post('/signup', registerUser);
+authRouter.post('/register', registerUser);
 
 // Login user
 authRouter.post('/login', loginUser);
