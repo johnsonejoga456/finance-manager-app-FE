@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link
 import { registerUser } from '../../api/auth';
 
 const Register = () => {
@@ -28,7 +28,7 @@ const Register = () => {
 
     try {
       // Call the backend to register the user
-      await registerUser(form)
+      await registerUser(form);
       // Navigate to the login page upon successful registration
       navigate('/login');
     } catch (err) {
@@ -98,9 +98,15 @@ const Register = () => {
             required
           />
         </div>
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded mb-4">
           Register
         </button>
+        <p className="text-gray-700 text-sm">
+          Already have an account?{' '}
+          <Link to="/login" className="text-blue-500 hover:underline">
+            Login
+          </Link>
+        </p>
       </form>
     </div>
   );
