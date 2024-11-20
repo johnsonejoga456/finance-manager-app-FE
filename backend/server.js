@@ -10,6 +10,7 @@ import transactionRouter from './src/routes/transactionRoutes.js';
 import errorHandler from './src/errorHandler.js';
 import http from 'http';
 import { Server } from 'socket.io';
+import dashboardRouter from './src/routes/dashboardRoutes.js';
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ mongoose
 
 // API Routes
 app.use('/api/auth', authRouter);
+app.use('/api/dashboard', dashboardRouter);
 app.use('/api/transactions', transactionRouter);
 app.use('/api/notifications', notificationRouter);
 

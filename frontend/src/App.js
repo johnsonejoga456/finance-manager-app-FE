@@ -8,6 +8,7 @@ import Transactions from './pages/Transactions';
 import Footer from './components/Footer';
 import Notification from './components/Notification';
 import Login from './pages/Auth/Login';
+import ForgotPassword from './pages/Auth/ForgotPassword';
 import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard';
 
@@ -67,6 +68,7 @@ function App() {
                 <Route path="/" element={!user ? <Navigate to="/register" /> : <Dashboard />} />
                 <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
                 <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route
                   path="/transactions"
                   element={user ? <Transactions /> : <Navigate to="/login" />}

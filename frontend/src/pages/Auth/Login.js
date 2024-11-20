@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../../api/auth';
 
 const Login = () => {
@@ -62,6 +62,11 @@ const Login = () => {
         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
           Login
         </button>
+        <div className="mt-4 text-center">
+          <Link to="/forgot-password" className="text-blue-500 hover:underline">
+            Forgot your Password?
+          </Link>
+        </div>
       </form>
     </div>
   );

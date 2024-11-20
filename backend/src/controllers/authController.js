@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import nodemailer from 'nodemailer';
 
 // Register user
 export const registerUser = async (req, res) => {
@@ -90,19 +91,25 @@ export const forgotPassword = async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'Gmail',
             auth: {
-                user: process.env.EMAIL, // user's email
-                pass: process.env.EMAIL_PASSWORD, // user email password
+                user: process.env.EMAIL, // my email
+                pass: process.env.EMAIL_PASSWORD, // my email password
             },
         });
 
         const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
 
         await transporter.sendMail({
-            from: process.env.EMAIL,
+            from: `"JayFirm" <${process.env.EMAIL}>`, // Custome name + ender email
             to: email,
             subject: 'Password Reset Request',
             text: `Click the following link to reset your password: ${resetUrl}`,
-            html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link is valid for 1 hour.<p>`,
+            html: `
+                <p> Hi ${user.username},</p>
+                <p>You requested a password reset. Click the link below to reset your password:</p>
+                <a href="${resetUrl}" style="color: #0c6ef3:">Reset Password</a>
+                <p>This link is only valid for 1 hour.<p>
+                <p>If you didn't request this, please ignore this email.</p>
+            `,
         });
 
         res.json({ message: 'Kindly check your email for your password reset link.' });
