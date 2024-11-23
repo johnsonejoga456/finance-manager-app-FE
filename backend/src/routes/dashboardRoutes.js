@@ -1,6 +1,6 @@
 import express from 'express';
-import { getDashboardData } from '../controller/dashboardController';
-import authMiddleware from '../middleware/auth';
+import { getDashboardData } from '../controllers/dashboardController.js';
+import authMiddleware from '../middleware/auth.js';
 
 const dashboardRouter = express.Router();
 

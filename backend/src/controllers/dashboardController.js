@@ -1,9 +1,10 @@
-import Transaction from "../models/Transaction";
-import Budget from "../models/Budget";
-import User from "../models/User";
+// Corrected `dashboardController.js`
+import Transaction from "../models/Transaction.js";
+import Budget from "../models/Budget.js";
+import User from "../models/User.js";
 
 // Updated dashboard data
-exports.getDashboardData = async (req, res) => {
+export const getDashboardData = async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -46,15 +47,15 @@ exports.getDashboardData = async (req, res) => {
 
     // Response
     res.status(200).json({
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-        },
-        summary: {
-            totalIncome,
-            totalExpenses,
-            netBalance,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+      summary: {
+        totalIncome,
+        totalExpenses,
+        netBalance,
       },
       categoryBreakdown,
       recurringTransactions,

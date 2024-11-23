@@ -10,8 +10,12 @@ import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import Overview from './pages/Dashboard/Overview';
+import Transactions from './pages/Dashboard/Transactions';
+import Budgets from './pages/Dashboard/Budgets';
 import Goals from './pages/Dashboard/Goals';
-
+import Reports from './pages/Dashboard/Reports';
+import Accounts from './pages/Dashboard/Accounts';
+import Settings from './pages/Settings/Preferences';
 
 function App() {
   const [notifications, setNotifications] = useState([]);
@@ -72,11 +76,29 @@ function App() {
                   path="/dashboard/overview"
                   element={user ? <Overview /> : <Navigate to="/register" />}
                 />
-
+                <Route
+                  path="/dashboard/transactions"
+                  element={user ? <Transactions /> : <Navigate to="/register" />}
+                />
+                <Route
+                  path="/dashboard/budgets"
+                  element={user ? <Budgets /> : <Navigate to="/register" />}
+                />
                 <Route
                   path="/dashboard/goals"
                   element={user ? <Goals /> : <Navigate to="/register" />}
                 />
+                <Route
+                  path="/dashboard/reports"
+                  element={user ? <Reports /> : <Navigate to="/register" />}
+                />
+                <Route
+                  path="/dashboard/accounts"
+                  element={user ? <Accounts /> : <Navigate to="/register" />}
+                />
+
+                {/* Settings */}
+                <Route path="/settings" element={user ? <Settings /> : <Navigate to="/register" />} />
 
                 {/* Default Route */}
                 <Route path="/" element={<Navigate to="/register" />} />

@@ -1,4 +1,4 @@
-import Goal from '../models/Goal.js';
+import Goal from '../models/Goals.js';
 
 // Create a new goal
 export const createGoal = async (req, res) => {
@@ -47,34 +47,73 @@ export const getGoals = async (req, res) => {
     }
 };
 
-// Update a goal
-export const updateGoal = async (req, res) => {
+// Mark a Goal as Complete
+export const markGoalAsComplete = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, targetAmount, currentAmount, deadline, milestones } = req.body;
 
         const goal = await Goal.findOneAndUpdate(
             { _id: id, user: req.user.id },
-            { title, targetAmount, currentAmount, deadline, milestones },
-            { new: true } // Return the updated document
+            { status: 'completed', currentAmount: targetAmount },
+            { new: true }
         );
 
         if (!goal) {
             return res.status(404).json({ message: 'Goal not found' });
         }
 
-        // Mark milestones as achieved if `currrentAmount` meets the milestone amount
-        goal.milestones.forEach(milestone => {
-            if (currentAmount >= milestone.amount) milestone.achieved = true;
-        });
+        res.status(200).json(goal);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
-        await goal.save();
+// Update Goal Progress
+export const updateGoalProgress = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { currentAmount } = req.body;
+
+        const goal = await Goal.findOneAndUpdate(
+            { _id: id, user: req.user.id },
+            { currentAmount },
+            { new: true }
+        );
+
+        if (!goal) {
+            return res.status(404).json({ message: 'Goal not found' });
+        }
 
         res.status(200).json(goal);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
+// Filter and Sort Goals
+export const filterAndSortGoals = async (req, res) => {
+    try {
+        const { status, sortBy } = req.query;
+        const query = { user: req.user.id };
+
+        if (status) {
+            query.status = status;
+        }
+
+        let sortOption = {};
+        if (sortBy === 'progress') {
+            sortOption = { currentAmount: -1 };
+        } else if (sortBy === 'deadline') {
+            sortOption = { deadline: 1 };
+        }
+
+        const goals = await Goal.find(query).sort(sortOption);
+        res.status(200).json(goals);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 
 
 // Users get notified

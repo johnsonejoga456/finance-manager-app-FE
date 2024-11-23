@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
 import { fetchGoals, createGoal, updateGoal, deleteGoal } from '../../api/goals';
 
 const Goals = () => {
@@ -12,24 +13,35 @@ const Goals = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch goals on page load
+  // Socket initialization for real-time updates
   useEffect(() => {
-    const loadGoals = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchGoals();
-        setGoals(data);
-      } catch (err) {
-        setError('Failed to load goals. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
+    const socket = io('http://localhost:5000');
+    socket.on('goalUpdated', () => {
+      fetchGoalsList(); // Refresh goals list on updates
+    });
+    return () => {
+      socket.disconnect();
     };
-
-    loadGoals();
   }, []);
 
-  // Handle input changes for the new goal
+  // Fetch goals on component mount
+  useEffect(() => {
+    fetchGoalsList();
+  }, []);
+
+  const fetchGoalsList = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchGoals();
+      setGoals(data);
+      setError('');
+    } catch (err) {
+      setError('Failed to load goals. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewGoal((prev) => ({
@@ -38,7 +50,6 @@ const Goals = () => {
     }));
   };
 
-  // Handle milestones input
   const handleMilestoneChange = (index, value) => {
     const updatedMilestones = [...newGoal.milestones];
     updatedMilestones[index].amount = value;
@@ -48,7 +59,21 @@ const Goals = () => {
     }));
   };
 
-  // Add a milestone
+  const toggleMilestoneAchieved = async (goalId, milestoneIndex) => {
+    try {
+      const updatedGoal = await updateGoal(goalId, {
+        action: 'toggleMilestone',
+        milestoneIndex,
+      });
+      setGoals((prev) =>
+        prev.map((goal) => (goal._id === updatedGoal._id ? updatedGoal : goal))
+      );
+      setError('');
+    } catch (err) {
+      setError('Failed to update milestone. Please try again.');
+    }
+  };
+
   const addMilestone = () => {
     setNewGoal((prev) => ({
       ...prev,
@@ -56,7 +81,6 @@ const Goals = () => {
     }));
   };
 
-  // Handle goal creation
   const handleCreateGoal = async () => {
     if (!newGoal.title || !newGoal.targetAmount || !newGoal.deadline) {
       setError('Please provide a title, target amount, and deadline.');
@@ -66,14 +90,28 @@ const Goals = () => {
     try {
       const createdGoal = await createGoal(newGoal);
       setGoals([...goals, createdGoal]);
-      setNewGoal({ title: '', targetAmount: '', deadline: '', milestones: [{ amount: '', achieved: false }] });
+      setNewGoal({
+        title: '',
+        targetAmount: '',
+        deadline: '',
+        milestones: [{ amount: '', achieved: false }],
+      });
       setError('');
     } catch (err) {
       setError('Failed to create goal. Please try again.');
     }
   };
 
-  // Render progress bar
+  const handleDeleteGoal = async (goalId) => {
+    try {
+      await deleteGoal(goalId);
+      setGoals((prev) => prev.filter((goal) => goal._id !== goalId));
+      setError('');
+    } catch (err) {
+      setError('Failed to delete goal. Please try again.');
+    }
+  };
+
   const renderProgressBar = (progress) => (
     <div className="w-full bg-gray-200 rounded-full h-4">
       <div
@@ -83,7 +121,6 @@ const Goals = () => {
     </div>
   );
 
-  // Render the page
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Your Goals</h1>
@@ -163,11 +200,35 @@ const Goals = () => {
               </p>
               <p>Deadline: {new Date(goal.deadline).toLocaleDateString()}</p>
               {renderProgressBar(goal.progress)}
+              <ul className="mt-2">
+                {goal.milestones.map((milestone, index) => (
+                  <li
+                    key={index}
+                    className="flex justify-between items-center"
+                  >
+                    <span>
+                      Milestone {index + 1}: ${milestone.amount}
+                    </span>
+                    <button
+                      className={`px-2 py-1 rounded ${
+                        milestone.achieved
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-500 text-white'
+                      }`}
+                      onClick={() =>
+                        toggleMilestoneAchieved(goal._id, index)
+                      }
+                    >
+                      {milestone.achieved ? 'Achieved' : 'Mark as Achieved'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
               <button
                 className="bg-red-500 text-white px-4 py-2 rounded mt-2 self-start"
-                onClick={() => deleteGoal(goal._id)}
+                onClick={() => handleDeleteGoal(goal._id)}
               >
-                Delete
+                Delete Goal
               </button>
             </li>
           ))}
