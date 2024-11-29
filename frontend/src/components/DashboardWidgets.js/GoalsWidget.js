@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchGoals } from "../../api/goals"; // API call for fetching goals
+import { fetchGoals } from "../../api/goals";
 import { useNavigate } from "react-router-dom";
 
 const GoalsWidget = () => {

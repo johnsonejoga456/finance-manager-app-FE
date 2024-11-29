@@ -12,7 +12,6 @@ import ForgotPassword from './pages/Auth/ForgotPassword';
 import Overview from './pages/Dashboard/Overview';
 import Goals from './pages/Dashboard/Goals';
 
-
 function App() {
   const [notifications, setNotifications] = useState([]);
   const { user, loading } = useContext(AuthContext);
