@@ -57,6 +57,7 @@ export const loginUser = async (req, res) => {
 
         res.status(200).json({ token });
     } catch (error) {
+        console.error('login error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -67,6 +68,7 @@ export const getCurrentUser = async (req, res) => {
         const user = await User.findById(req.user.id).select('-password');
         res.json(user);
     } catch (error) {
+        console.error('Error fetching user:'), error
         res.status(500).json({ message: 'Server error' });
     }
 };

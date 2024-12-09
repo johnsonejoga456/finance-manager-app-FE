@@ -4,7 +4,7 @@ const goalSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     targetAmount: { type: Number, required: true },
-    currentAmount: { type: Number, default: 0 }, // Default to 0 since progress starts at 0
+    currentAmount: { type: Number, default: 0 },
     deadline: { type: Date, required: true },
     status: { type: String, enum: ['in-progress', 'completed'], default: 'in-progress' }, // Goal status
     milestones: [

@@ -2,7 +2,7 @@ import express from 'express';
 import { 
     addTransaction, 
     addRecurringTransaction,
-    getTransaction, 
+    getTransactions, 
     deleteTransaction, 
     updateTransaction,
     searchTransactions,
@@ -25,7 +25,7 @@ import authMiddleware from '../middleware/auth.js';
 const transactionRouter = express.Router();
 
 // Get a transaction by ID
-transactionRouter.get('/:id', authMiddleware, validateTransactionId, getTransaction);
+transactionRouter.get('/:id', authMiddleware, validateTransactionId, getTransactions);
 
 // Add a transaction
 transactionRouter.post('/', authMiddleware, validateTransaction, addTransaction);

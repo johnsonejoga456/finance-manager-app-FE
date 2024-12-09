@@ -2,42 +2,64 @@ import Transaction from '../models/Transaction.js';
 import cron from 'node-cron';
 import { createObjectCsvWriter } from 'csv-writer';
 
-// Add a transaction with types and subtypes
 export const addTransaction = async (req, res) => {
     try {
-        const { type, subType, amount, category } = req.body;
-        const transaction = new Transaction({
+        const {
             type,
-            subType,
             amount,
-            originalAmount: amount, // Store original amount in user's currency
-            currency: req.body.currency || 'USD', // Default to USD if no currency provided
             category,
-            user: req.user.id
+            date,
+            note,
+            recurrence,
+            currency = 'USD' } = req.body;
+
+        // Convert to USD if necessary
+        let convertedAmount = amount;
+        if (currency !== 'USD') {
+            convertedAmount = await convertToUSD(amount, currency);
+        }
+
+        const transaction = new Transaction({
+            user: req.user.id,
+            type,
+            subType: req.body.subType || null,
+            amount: convertedAmount,
+            originalAmount: amount,
+            currency,
+            category,
+            date,
+            note,
+            recurrence,
         });
+
         await transaction.save();
-        res.status(201).json(transaction);
+        res.status(201).json({ message: 'Transaction added successfully', transaction });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-
 // Get  transaction
-export const getTransaction = async (req, res) => {
+export const getTransactions = async (req, res) => {
     try {
-        const transaction = await Transaction.findById(req.params.id);
+        const { type, category, dateRange, query } = req.query;
+        const filter = { user: req.user.id };
 
-        if (!transaction) {
-            return res.status(404).json({ message: 'Transaction not found' });
+        if (type) filter.type = type;
+        if (category) filter.category = category;
+        if (dateRange) {
+            const [startDate, endDate] = dateRange.split(',');
+            filter.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
+        }
+        if (query) {
+            filter.$or = [
+                { note: { $regex: query, $options: 'i' } },
+                { category: { $regex: query, $options: 'i' } },
+            ];
         }
 
-        // Check if the transaction belongs to the logged-in user
-        if (transaction.user.toString() !== req.user.id) {
-            return res.status(401).json({ message: 'Not authorized' });
-        }
-
-        res.status(200).json(transaction);
+        const transactions = await Transaction.find(filter).sort({ date: -1 });
+        res.status(200).json(transactions);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
