@@ -4,10 +4,16 @@ const API_BASE_URL = 'http://localhost:5000/api/goals';
 
 // Fetch all goals
 export const fetchGoals = async () => {
-  const response = await axios.get(`${API_BASE_URL}`);
+  try {
+    const response = await axios.get(`${API_BASE_URL}`);
+  console.log('Fetched goals data:', response.data);
   return response.data;
-};
+} catch (error) {
+  console.error('Error fetching goals:', error.response ? error.response.data : error.message);
+}
 
+  }
+  
 // Create a new goal
 export const createGoal = async (goalData) => {
   const response = await axios.post(`${API_BASE_URL}`, goalData);
