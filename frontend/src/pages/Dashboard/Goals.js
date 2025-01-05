@@ -4,18 +4,25 @@ import GoalCard from "../../components/Goals/GoalCard";
 import GoalForm from "../../components/Goals/GoalForm";
 
 const Goals = () => {
-  const [goals, setGoals] = useState([]);
+  const [goals, setGoals] = useState([]); // Initialize goals as an empty array
   const [selectedGoal, setSelectedGoal] = useState(null); // For editing
   const [showForm, setShowForm] = useState(false); // Toggle form visibility
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState(null); // Error state
 
   // Fetch goals on component mount
   useEffect(() => {
     const getGoals = async () => {
       try {
+        setLoading(true);
         const data = await fetchGoals();
+        if (!Array.isArray(data)) throw new Error("Invalid data format");
         setGoals(data);
       } catch (error) {
         console.error("Error fetching goals:", error);
+        setError("Failed to load goals. Please try again later.");
+      } finally {
+        setLoading(false);
       }
     };
     getGoals();
@@ -83,16 +90,24 @@ const Goals = () => {
         />
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {goals.map((goal) => (
-          <GoalCard
-            key={goal.id}
-            goal={goal}
-            onEdit={handleEditGoal}
-            onDelete={handleDeleteGoal}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <p>Loading goals...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : goals.length === 0 ? (
+        <p>No goals available. Start by adding a new goal!</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {goals.map((goal) => (
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              onEdit={handleEditGoal}
+              onDelete={handleDeleteGoal}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

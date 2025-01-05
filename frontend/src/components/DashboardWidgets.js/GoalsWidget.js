@@ -11,10 +11,10 @@ const GoalsWidget = () => {
         const loadGoals = async () => {
             try {
                 const data = await fetchGoals();
-                setGoals(data);
-                setLoading(false);
+                setGoals(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error("Error fetching goals:", error);
+            } finally {
                 setLoading(false);
             }
         };
@@ -22,11 +22,13 @@ const GoalsWidget = () => {
         loadGoals();
     }, []);
 
-    // Calculate metrics
-    const totalGoals = goals.length;
-    const completedGoals = goals.filter((goal) => goal.progress >= 100).length;
+    // Safeguard calculations
+    const safeGoals = Array.isArray(goals) ? goals : [];
+    const totalGoals = safeGoals.length;
+    const completedGoals = safeGoals.filter((goal) => goal.progress >= 100).length;
     const activeGoals = totalGoals - completedGoals;
-    const upcomingDeadlines = goals.filter((goal) => {
+    const upcomingDeadlines = safeGoals.filter((goal) => {
+        if (!goal.deadline) return false;
         const daysLeft = Math.ceil((new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24));
         return daysLeft <= 7 && daysLeft > 0;
     });
@@ -36,6 +38,8 @@ const GoalsWidget = () => {
             <h3 className="text-lg font-semibold mb-4">Goals Overview</h3>
             {loading ? (
                 <p>Loading goals...</p>
+            ) : totalGoals === 0 ? (
+                <p>No goals available. Start adding your goals!</p>
             ) : (
                 <div>
                     <p>Total Goals: {totalGoals}</p>
