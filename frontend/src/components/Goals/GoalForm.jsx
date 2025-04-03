@@ -36,9 +36,10 @@ const GoalForm = ({ goal = null, onSave, onCancel }) => {
     targetAmount: "",
     currentAmount: "",
     deadline: "",
+    category: "other",
+    milestones: [], // Array of { amount: Number }
   });
 
-  // Populate form if editing an existing goal
   useEffect(() => {
     if (goal) {
       setFormData({
@@ -46,7 +47,9 @@ const GoalForm = ({ goal = null, onSave, onCancel }) => {
         description: goal.description || "",
         targetAmount: goal.targetAmount || "",
         currentAmount: goal.currentAmount || "",
-        deadline: goal.deadline || "",
+        deadline: goal.deadline ? goal.deadline.split("T")[0] : "", // Format for date input
+        category: goal.category || "other",
+        milestones: goal.milestones || [],
       });
     }
   }, [goal]);
@@ -56,16 +59,37 @@ const GoalForm = ({ goal = null, onSave, onCancel }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleMilestoneChange = (index, value) => {
+    const newMilestones = [...formData.milestones];
+    newMilestones[index] = { amount: Number(value), achieved: false };
+    setFormData((prev) => ({ ...prev, milestones: newMilestones }));
+  };
+
+  const addMilestone = () => {
+    setFormData((prev) => ({
+      ...prev,
+      milestones: [...prev.milestones, { amount: 0, achieved: false }],
+    }));
+  };
+
+  const removeMilestone = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      milestones: prev.milestones.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Validate form data
     if (!formData.title || !formData.targetAmount || !formData.deadline) {
       alert("Please fill in all required fields.");
       return;
     }
-
-    onSave(formData);
+    onSave({
+      ...formData,
+      targetAmount: Number(formData.targetAmount),
+      currentAmount: Number(formData.currentAmount) || 0,
+    });
   };
 
   return (
@@ -145,6 +169,53 @@ const GoalForm = ({ goal = null, onSave, onCancel }) => {
               onChange={handleChange}
               required
             />
+          </div>
+
+          <div className="mb-4">
+            <label className="block font-bold mb-1" htmlFor="category">
+              Category
+            </label>
+            <select
+              id="category"
+              name="category"
+              className="w-full p-2 border rounded"
+              value={formData.category}
+              onChange={handleChange}
+            >
+              <option value="savings">Savings</option>
+              <option value="debt">Debt</option>
+              <option value="investment">Investment</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block font-bold mb-1">Milestones</label>
+            {formData.milestones.map((m, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <input
+                  type="number"
+                  value={m.amount}
+                  onChange={(e) => handleMilestoneChange(index, e.target.value)}
+                  className="p-2 border rounded w-32"
+                  placeholder="Milestone amount"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeMilestone(index)}
+                  className="text-red-500 hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addMilestone}
+              className="text-blue-500 hover:underline"
+            >
+              Add Milestone
+            </button>
           </div>
 
           <div className="flex justify-end gap-2">
