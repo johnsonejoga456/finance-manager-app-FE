@@ -1,54 +1,118 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = 'http://localhost:5000/api/goals';
+const API = axios.create({
+  baseURL: "http://localhost:5000/api/goals",
+});
+
+// Attach token from localStorage
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  console.log("Goals API - Token being sent:", token); // Debug log
+  console.log("Goals API - Request URL:", config.url); // Debug log
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle 401 errors globally
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.log("Goals API - 401 detected, clearing token and redirecting");
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Fetch all goals
-export const fetchGoals = async () => {
+export const fetchGoals = async (filters = {}) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}`);
-  console.log('Fetched goals data:', response.data);
-  return response.data;
-} catch (error) {
-  console.error('Error fetching goals:', error.response ? error.response.data : error.message);
-}
-
+    const response = await API.get("", { params: filters });
+    console.log("Fetched goals data:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching goals:", error.response?.data || error.message);
+    throw error;
   }
-  
+};
+
 // Create a new goal
 export const createGoal = async (goalData) => {
-  const response = await axios.post(`${API_BASE_URL}`, goalData);
-  return response.data;
+  try {
+    const response = await API.post("", goalData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating goal:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
-// Update Goal
+// Update goal (not currently used, but keeping for completeness)
 export const updateGoal = async (goalId, goalData) => {
-  const response = await axios.put(`${API_BASE_URL}/${goalId}`, goalData);
-  return response.data;
+  try {
+    const response = await API.put(`/${goalId}`, goalData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating goal:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
-// Update goal process
+// Mark goal as complete
 export const markGoalAsComplete = async (goalId) => {
-  const response = await axios.patch(`${API_BASE_URL}/${goalId}/complete`);
-  return response.data;
+  try {
+    const response = await API.patch(`/${goalId}/complete`);
+    return response.data;
+  } catch (error) {
+    console.error("Error marking goal complete:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
+// Update goal progress
 export const updateGoalProgress = async (goalId, currentAmount) => {
-  const response = await axios.patch(`${API_BASE_URL}/${goalId}/progress`, { currentAmount });
-  return response.data;
+  try {
+    const response = await API.patch(`/${goalId}/progress`, { currentAmount });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating progress:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
+// Fetch filtered and sorted goals (optional filters)
 export const fetchFilteredAndSortedGoals = async (filters) => {
-  const response = await axios.get(API_BASE_URL, { params: filters });
-  return response.data;
+  try {
+    const response = await API.get("", { params: filters });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching filtered goals:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
+// Delete a goal
 export const deleteGoal = async (goalId) => {
-  const response = await axios.delete(`${API_BASE_URL}/${goalId}`);
-  return response.data;
+  try {
+    const response = await API.delete(`/${goalId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting goal:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
 // Fetch notifications related to goals
 export const fetchGoalNotifications = async () => {
-  const response = await axios.get(`${API_BASE_URL}/notifications`); // Corrected path
-  return response.data;
+  try {
+    const response = await API.get("/notifications");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching notifications:", error.response?.data || error.message);
+    throw error;
+  }
 };
