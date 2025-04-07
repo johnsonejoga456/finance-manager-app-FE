@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 
-// Error Boundary Component
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -18,9 +17,9 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4 bg-red-100 text-red-700 rounded">
+        <div className="p-4 bg-red-100 text-red-700 rounded-lg">
           <h2 className="text-lg font-bold">Something went wrong!</h2>
-          <p>Please try again later or contact support if the issue persists.</p>
+          <p>Please try again later or contact support.</p>
         </div>
       );
     }
@@ -28,7 +27,6 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// Main GoalForm Component
 const GoalForm = ({ goal = null, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     title: "",
@@ -37,7 +35,7 @@ const GoalForm = ({ goal = null, onSave, onCancel }) => {
     currentAmount: "",
     deadline: "",
     category: "other",
-    milestones: [], // Array of { amount: Number }
+    milestones: [],
   });
 
   useEffect(() => {
@@ -47,7 +45,7 @@ const GoalForm = ({ goal = null, onSave, onCancel }) => {
         description: goal.description || "",
         targetAmount: goal.targetAmount || "",
         currentAmount: goal.currentAmount || "",
-        deadline: goal.deadline ? goal.deadline.split("T")[0] : "", // Format for date input
+        deadline: goal.deadline ? goal.deadline.split("T")[0] : "",
         category: goal.category || "other",
         milestones: goal.milestones || [],
       });
@@ -94,116 +92,119 @@ const GoalForm = ({ goal = null, onSave, onCancel }) => {
 
   return (
     <ErrorBoundary>
-      <div className="p-4 bg-white shadow-md rounded">
-        <h2 className="text-lg font-bold mb-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <h2 className="text-2xl font-semibold text-gray-800">
           {goal ? "Edit Goal" : "Add New Goal"}
         </h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block font-bold mb-1" htmlFor="title">
-              Title
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              className="w-full p-2 border rounded"
-              value={formData.title}
-              onChange={handleChange}
-              required
-            />
-          </div>
 
-          <div className="mb-4">
-            <label className="block font-bold mb-1" htmlFor="description">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              className="w-full p-2 border rounded"
-              value={formData.description}
-              onChange={handleChange}
-            />
-          </div>
+        <div>
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+            Title
+          </label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            required
+          />
+        </div>
 
-          <div className="mb-4">
-            <label className="block font-bold mb-1" htmlFor="targetAmount">
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            Description
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            rows="3"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="targetAmount" className="block text-sm font-medium text-gray-700">
               Target Amount
             </label>
             <input
               type="number"
               id="targetAmount"
               name="targetAmount"
-              className="w-full p-2 border rounded"
               value={formData.targetAmount}
               onChange={handleChange}
+              className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
               required
             />
           </div>
-
-          <div className="mb-4">
-            <label className="block font-bold mb-1" htmlFor="currentAmount">
+          <div>
+            <label htmlFor="currentAmount" className="block text-sm font-medium text-gray-700">
               Current Amount
             </label>
             <input
               type="number"
               id="currentAmount"
               name="currentAmount"
-              className="w-full p-2 border rounded"
               value={formData.currentAmount}
               onChange={handleChange}
+              className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             />
           </div>
+        </div>
 
-          <div className="mb-4">
-            <label className="block font-bold mb-1" htmlFor="deadline">
-              Deadline
-            </label>
-            <input
-              type="date"
-              id="deadline"
-              name="deadline"
-              className="w-full p-2 border rounded"
-              value={formData.deadline}
-              onChange={handleChange}
-              required
-            />
-          </div>
+        <div>
+          <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
+            Deadline
+          </label>
+          <input
+            type="date"
+            id="deadline"
+            name="deadline"
+            value={formData.deadline}
+            onChange={handleChange}
+            className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            required
+          />
+        </div>
 
-          <div className="mb-4">
-            <label className="block font-bold mb-1" htmlFor="category">
-              Category
-            </label>
-            <select
-              id="category"
-              name="category"
-              className="w-full p-2 border rounded"
-              value={formData.category}
-              onChange={handleChange}
-            >
-              <option value="savings">Savings</option>
-              <option value="debt">Debt</option>
-              <option value="investment">Investment</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+        <div>
+          <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+            Category
+          </label>
+          <select
+            id="category"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          >
+            <option value="savings">Savings</option>
+            <option value="debt">Debt</option>
+            <option value="investment">Investment</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
 
-          <div className="mb-4">
-            <label className="block font-bold mb-1">Milestones</label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Milestones</label>
+          <div className="mt-2 space-y-3">
             {formData.milestones.map((m, index) => (
-              <div key={index} className="flex gap-2 mb-2">
+              <div key={index} className="flex items-center gap-3">
                 <input
                   type="number"
                   value={m.amount}
                   onChange={(e) => handleMilestoneChange(index, e.target.value)}
-                  className="p-2 border rounded w-32"
-                  placeholder="Milestone amount"
+                  className="w-32 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                  placeholder="Amount"
                 />
                 <button
                   type="button"
                   onClick={() => removeMilestone(index)}
-                  className="text-red-500 hover:underline"
+                  className="text-red-500 hover:text-red-600 text-sm font-medium transition"
                 >
                   Remove
                 </button>
@@ -212,29 +213,29 @@ const GoalForm = ({ goal = null, onSave, onCancel }) => {
             <button
               type="button"
               onClick={addMilestone}
-              className="text-blue-500 hover:underline"
+              className="mt-2 text-indigo-600 hover:text-indigo-700 text-sm font-medium transition"
             >
-              Add Milestone
+              + Add Milestone
             </button>
           </div>
+        </div>
 
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="bg-gray-500 text-white px-4 py-2 rounded"
-              onClick={onCancel}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
-              Save
-            </button>
-          </div>
-        </form>
-      </div>
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+          >
+            Save Goal
+          </button>
+        </div>
+      </form>
     </ErrorBoundary>
   );
 };

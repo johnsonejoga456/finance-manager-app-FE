@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 import {
   fetchGoals,
   createGoal,
@@ -11,6 +13,8 @@ import GoalCard from "../../components/Goals/GoalCard";
 import GoalForm from "../../components/Goals/GoalForm";
 
 const Goals = () => {
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [goals, setGoals] = useState([]);
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -18,13 +22,17 @@ const Goals = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch goals and notifications on mount
   useEffect(() => {
     const loadData = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
       try {
         setLoading(true);
         const [goalsData, notificationsData] = await Promise.all([
-          fetchGoals({ status: "in-progress" }), // Default to in-progress goals
+          fetchGoals({ status: "in-progress" }),
           fetchGoalNotifications(),
         ]);
         if (!Array.isArray(goalsData)) throw new Error("Invalid goals data format");
@@ -32,28 +40,20 @@ const Goals = () => {
         setNotifications(notificationsData);
       } catch (error) {
         console.error("Error loading data:", error);
-        setError("Failed to load goals or notifications. Please try again.");
+        setError("Failed to load goals or notifications.");
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, []);
+  }, [navigate]);
 
-  // Handle save goal (create or update)
   const handleSaveGoal = async (goalData) => {
     try {
-      if (selectedGoal) {
-        // For now, we only support creating new goals in this flow
-        setShowForm(false);
-        setSelectedGoal(null);
-        return;
-      }
       const newGoal = await createGoal(goalData);
       setGoals((prev) => [...prev, newGoal]);
       setShowForm(false);
       setSelectedGoal(null);
-      // Refresh notifications
       const notificationsData = await fetchGoalNotifications();
       setNotifications(notificationsData);
     } catch (error) {
@@ -62,7 +62,6 @@ const Goals = () => {
     }
   };
 
-  // Handle mark goal as complete
   const handleMarkComplete = async (goalId) => {
     try {
       const updatedGoal = await markGoalAsComplete(goalId);
@@ -77,7 +76,6 @@ const Goals = () => {
     }
   };
 
-  // Handle update progress
   const handleUpdateProgress = async (goalId, currentAmount) => {
     try {
       const updatedGoal = await updateGoalProgress(goalId, currentAmount);
@@ -92,7 +90,6 @@ const Goals = () => {
     }
   };
 
-  // Handle delete goal
   const handleDeleteGoal = async (goalId) => {
     try {
       await deleteGoal(goalId);
@@ -105,7 +102,6 @@ const Goals = () => {
     }
   };
 
-  // Open form for creating (editing not fully supported yet)
   const handleEditGoal = (goal) => {
     setSelectedGoal(goal);
     setShowForm(true);
@@ -117,16 +113,30 @@ const Goals = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Financial Goals</h1>
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header */}
+      <header className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-semibold text-gray-800">Financial Goals</h1>
+        {user && (
+          <div className="flex items-center gap-4">
+            <span className="text-gray-600">Hello, {user.username}</span>
+            <button
+              onClick={logout}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </header>
 
       {/* Notifications */}
       {notifications.length > 0 && (
-        <div className="mb-4 p-4 bg-yellow-100 rounded">
-          <h2 className="font-bold">Notifications</h2>
-          <ul>
+        <div className="mb-6 p-4 bg-amber-100 rounded-lg shadow-sm border border-amber-200">
+          <h2 className="text-lg font-medium text-amber-800">Notifications</h2>
+          <ul className="mt-2 space-y-1">
             {notifications.map((note, index) => (
-              <li key={index} className="text-sm text-gray-700">
+              <li key={index} className="text-sm text-amber-700">
                 {note.message}
               </li>
             ))}
@@ -134,29 +144,38 @@ const Goals = () => {
         </div>
       )}
 
+      {/* Add Goal Button */}
       <button
-        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
         onClick={() => setShowForm(true)}
+        className="mb-6 bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-indigo-700 transition transform hover:scale-105"
       >
-        Add New Goal
+        + Add New Goal
       </button>
 
+      {/* Form Modal */}
       {showForm && (
-        <GoalForm
-          goal={selectedGoal}
-          onSave={handleSaveGoal}
-          onCancel={handleCancelForm}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl transform transition-all">
+            <GoalForm
+              goal={selectedGoal}
+              onSave={handleSaveGoal}
+              onCancel={handleCancelForm}
+            />
+          </div>
+        </div>
       )}
 
+      {/* Goals Grid */}
       {loading ? (
-        <p>Loading goals...</p>
+        <div className="text-center text-gray-500 animate-pulse">Loading goals...</div>
       ) : error ? (
-        <p className="text-red-500">{error}</p>
+        <div className="text-center text-red-500 bg-red-100 p-4 rounded-lg">{error}</div>
       ) : goals.length === 0 ? (
-        <p>No goals available. Start by adding a new goal!</p>
+        <div className="text-center text-gray-500 bg-white p-6 rounded-lg shadow">
+          No goals yet. Start by adding a new one!
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {goals.map((goal) => (
             <GoalCard
               key={goal._id}
