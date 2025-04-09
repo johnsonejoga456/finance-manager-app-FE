@@ -1,7 +1,17 @@
 import React, { useState } from "react";
+import MilestoneList from "./MilestoneList";
 
-const GoalCard = ({ goal, onEdit, onDelete, onMarkComplete, onUpdateProgress }) => {
+const GoalCard = ({ goal, onEdit, onDelete, onMarkComplete, onUpdateProgress, onUpdateMilestones }) => {
   const [progressInput, setProgressInput] = useState("");
+  const [milestoneInput, setMilestoneInput] = useState("");
+
+  const currencySymbols = {
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    JPY: "¥",
+    CAD: "$",
+  };
 
   const handleProgressSubmit = (e) => {
     e.preventDefault();
@@ -11,13 +21,23 @@ const GoalCard = ({ goal, onEdit, onDelete, onMarkComplete, onUpdateProgress }) 
     }
   };
 
-  return (
-    <div className="bg-white rounded-xl shadow-lg p-5 hover:shadow-xl transition-shadow duration-300">
-      <h2 className="text-xl font-semibold text-gray-800 mb-2">{goal.title}</h2>
-      <p className="text-sm text-gray-500 mb-1">Category: <span className="font-medium">{goal.category}</span></p>
-      <p className="text-gray-600 text-sm mb-4">{goal.description || "No description"}</p>
+  const handleMilestoneSubmit = (e) => {
+    e.preventDefault();
+    if (milestoneInput && !isNaN(milestoneInput)) {
+      const newMilestones = [...goal.milestones, { amount: Number(milestoneInput), achieved: false }];
+      onUpdateMilestones(goal._id, newMilestones);
+      setMilestoneInput("");
+    }
+  };
 
-      {/* Progress Bar */}
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-5 hover:shadow-xl transition-all duration-300 hover:scale-105">
+      <h2 className="text-xl font-semibold text-gray-800 mb-2">{goal.title}</h2>
+      <p className="text-sm text-gray-500 mb-2">Category: <span className="font-medium">{goal.category}</span></p>
+      {goal.description && (
+        <p className="text-sm text-gray-600 mb-4 bg-gray-50 p-2 rounded-lg">{goal.description}</p>
+      )}
+
       <div className="mb-4">
         <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
           <div
@@ -26,29 +46,13 @@ const GoalCard = ({ goal, onEdit, onDelete, onMarkComplete, onUpdateProgress }) 
           ></div>
         </div>
         <p className="text-xs text-gray-500 mt-1">
-          ${goal.currentAmount} / ${goal.targetAmount} ({goal.progress}%)
+          {currencySymbols[goal.currency]}{goal.currentAmount} / {currencySymbols[goal.currency]}{goal.targetAmount} ({goal.progress}%)
         </p>
       </div>
 
-      {/* Milestones */}
-      {goal.milestones.length > 0 && (
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-gray-700">Milestones</h3>
-          <ul className="mt-1 space-y-1">
-            {goal.milestones.map((m, index) => (
-              <li
-                key={index}
-                className={`text-xs ${m.achieved ? "text-green-600" : "text-gray-500"}`}
-              >
-                ${m.amount} {m.achieved && <span className="text-green-500">(Achieved)</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <MilestoneList milestones={goal.milestones} />
 
-      {/* Actions */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 mt-4">
         <form onSubmit={handleProgressSubmit} className="flex gap-2 items-center">
           <input
             type="number"
@@ -62,6 +66,21 @@ const GoalCard = ({ goal, onEdit, onDelete, onMarkComplete, onUpdateProgress }) 
             className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-200 transition"
           >
             Update
+          </button>
+        </form>
+        <form onSubmit={handleMilestoneSubmit} className="flex gap-2 items-center">
+          <input
+            type="number"
+            value={milestoneInput}
+            onChange={(e) => setMilestoneInput(e.target.value)}
+            placeholder="Add milestone"
+            className="w-24 p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <button
+            type="submit"
+            className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-200 transition"
+          >
+            Add
           </button>
         </form>
         <div className="flex gap-2 justify-end">
