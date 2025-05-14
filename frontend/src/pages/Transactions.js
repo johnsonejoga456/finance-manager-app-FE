@@ -5,7 +5,6 @@ import {
   Container, Title, Table, TextInput, Button, Group, Loader, Badge, ActionIcon, 
   Modal, Text, Select, MultiSelect, Checkbox, Box, Tabs, RingProgress, Paper, Notification 
 } from '@mantine/core';
-import { usePlaidLink } from 'react-plaid-link';
 import transactionService from '../services/transactionService';
 
 const Transactions = () => {
@@ -20,7 +19,6 @@ const Transactions = () => {
   const [editData, setEditData] = useState(null);
   const [insightsTab, setInsightsTab] = useState('list');
   const [insightsData, setInsightsData] = useState(null);
-  const [plaidToken, setPlaidToken] = useState(null);
 
   // Fetch transactions with filters
   const fetchTransactions = useCallback(async () => {
@@ -68,37 +66,6 @@ const Transactions = () => {
     fetchTransactions();
     fetchInsights();
   }, [fetchTransactions, fetchInsights]);
-
-  // Plaid setup
-  useEffect(() => {
-    const initPlaid = async () => {
-      try {
-        const token = await transactionService.getPlaidLinkToken();
-        setPlaidToken(token);
-      } catch (err) {
-        const message = err.response?.status === 401 
-          ? 'Unauthorized: Please log in to connect a bank.' 
-          : err.response?.data?.message || 'Failed to fetch Plaid token. Please check server configuration.';
-        setError(message);
-        console.error('Error fetching Plaid token:', err);
-      }
-    };
-    initPlaid();
-  }, []);
-
-  const { open, ready } = usePlaidLink({
-    token: plaidToken,
-    onSuccess: async (publicToken) => {
-      try {
-        await transactionService.exchangePlaidToken(publicToken);
-        fetchTransactions();
-      } catch (err) {
-        const message = err.response?.data?.message || 'Failed to sync bank account.';
-        setError(message);
-        console.error('Plaid sync error:', err);
-      }
-    },
-  });
 
   // Handlers
   const handleSearch = (e) => {
@@ -159,9 +126,6 @@ const Transactions = () => {
         <Group>
           <Button variant="gradient" gradient={{ from: 'indigo', to: 'violet' }} onClick={() => setEditModal(true)}>
             Add Transaction
-          </Button>
-          <Button variant="outline" color="violet" onClick={open} disabled={!ready}>
-            Connect Bank
           </Button>
         </Group>
       </Group>

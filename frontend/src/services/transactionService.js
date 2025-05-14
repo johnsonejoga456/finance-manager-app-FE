@@ -70,18 +70,6 @@ const transactionService = {
     const response = await api.get('/analytics/expense-breakdown');
     return response.data.data;
   },
-  getPlaidLinkToken: async () => {
-    const response = await api.get('/plaid/link');
-    return response.data.data;
-  },
-  exchangePlaidToken: async (publicToken) => {
-    const response = await api.post('/plaid/exchange', { publicToken });
-    return response.data.data;
-  },
-  syncBankTransactions: async () => {
-    const response = await api.get('/plaid/sync');
-    return response.data.data;
-  },
 };
 
 export default transactionService;
