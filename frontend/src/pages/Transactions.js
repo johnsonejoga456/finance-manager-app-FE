@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import transactionService from '../services/transactionService';
 import TransactionFilters from '../components/Transactions/TransactionFilters';
@@ -6,6 +5,8 @@ import TransactionList from '../components/Transactions/TransactionList';
 import TransactionModals from '../components/Transactions/TransactionModals';
 import TransactionSummary from '../components/Transactions/TransactionSummary';
 import SpendingAlerts from '../components/Transactions/SpendingAlerts';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBeer, faFilm, faGasPump, faUtensils, faCreditCard, faShoppingBag, faGift, faCog } from '@fortawesome/free-solid-svg-icons';
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState([]);
@@ -34,16 +35,18 @@ export default function Transactions() {
     transfer: ['savings'],
     investment: ['stocks', 'bonds'],
   };
+
+  // Updated categoryIcons with Font Awesome
   const categoryIcons = {
-    Bar: '🍺',
-    Entertainment: '🎉',
-    Fuel: '⛽',
-    'Shoes/Clothing': '👟',
-    'Credit Card': '💳',
-    'Eating Out': '🍽️',
-    Technology: '💻',
-    Gifts: '🎁',
-    Other: '🔧',
+    Bar: <FontAwesomeIcon icon={faBeer} className="h-6 w-6 text-blue-500" />,
+    Entertainment: <FontAwesomeIcon icon={faFilm} className="h-6 w-6 text-blue-500" />,
+    Fuel: <FontAwesomeIcon icon={faGasPump} className="h-6 w-6 text-blue-500" />,
+    'Shoes/Clothing': <FontAwesomeIcon icon={faShoppingBag} className="h-6 w-6 text-blue-500" />,
+    'Credit Card': <FontAwesomeIcon icon={faCreditCard} className="h-6 w-6 text-blue-500" />,
+    'Eating Out': <FontAwesomeIcon icon={faUtensils} className="h-6 w-6 text-blue-500" />,
+    Technology: <FontAwesomeIcon icon={faCog} className="h-6 w-6 text-blue-500" />,
+    Gifts: <FontAwesomeIcon icon={faGift} className="h-6 w-6 text-blue-500" />,
+    Other: <FontAwesomeIcon icon={faCog} className="h-6 w-6 text-blue-500" />,
   };
 
   const [form, setForm] = useState({
