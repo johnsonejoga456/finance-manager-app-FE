@@ -1,24 +1,28 @@
-
 export default function TransactionSummary({ summary, categorySummary }) {
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <span className="text-gray-700">Transactions: {Object.keys(categorySummary).length}</span>
-        <span className={`font-semibold ${summary.total < 0 ? 'text-red-600' : 'text-green-600'}`}>
-          Total: ${summary.total.toFixed(2)}
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+        <span className="text-gray-600 font-medium">Transactions: {Object.keys(categorySummary).length}</span>
+        <span className={`font-semibold text-lg ${summary.total < 0 ? 'text-red-600' : 'text-green-600'}`}>
+          Total: ${Math.abs(summary.total).toFixed(2)} {summary.total < 0 ? 'Debit' : 'Credit'}
         </span>
       </div>
-      <h4 className="text-lg font-semibold mb-2 text-gray-800">Spending by Category</h4>
+      <h4 className="text-lg font-semibold text-gray-800 mb-3">Spending by Category</h4>
       {Object.keys(categorySummary).length > 0 ? (
-        <div className="flex flex-wrap gap-4 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {Object.entries(categorySummary).map(([category, total]) => (
-            <span key={category} className="bg-gray-100 px-3 py-1 rounded text-sm text-gray-700">
-              {category}: ${total.toFixed(2)}
-            </span>
+            <div
+              key={category}
+              className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+              title={`Total spent in ${category}: $${total.toFixed(2)}`}
+            >
+              <div className="font-medium truncate">{category}</div>
+              <div className="text-gray-900 font-semibold">${total.toFixed(2)}</div>
+            </div>
           ))}
         </div>
       ) : (
-        <div className="mb-4 text-gray-500">No spending data available.</div>
+        <div className="text-gray-500 italic">No spending data available.</div>
       )}
     </div>
   );

@@ -10,7 +10,8 @@ import { faBeer, faFilm, faGasPump, faUtensils, faCreditCard, faShoppingBag, faG
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState([]);
-  const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [error, setError] = useState(null);
+  const [spendingAlerts, setSpendingAlerts] = useState([]);
   const [summary, setSummary] = useState({ total: 0 });
   const [categorySummary, setCategorySummary] = useState({});
   const [filterCategory, setFilterCategory] = useState('');
@@ -25,7 +26,6 @@ export default function Transactions() {
   const [deleteTransactionId, setDeleteTransactionId] = useState(null);
   const [editTransaction, setEditTransaction] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [spendingAlerts, setSpendingAlerts] = useState([]);
   const transactionsPerPage = 5;
 
   const categories = ['Bar', 'Entertainment', 'Fuel', 'Shoes/Clothing', 'Credit Card', 'Eating Out', 'Technology', 'Gifts', 'Other'];
@@ -36,7 +36,6 @@ export default function Transactions() {
     investment: ['stocks', 'bonds'],
   };
 
-  // Updated categoryIcons with Font Awesome
   const categoryIcons = {
     Bar: <FontAwesomeIcon icon={faBeer} className="h-6 w-6 text-blue-500" />,
     Entertainment: <FontAwesomeIcon icon={faFilm} className="h-6 w-6 text-blue-500" />,
@@ -67,21 +66,36 @@ export default function Transactions() {
 
   const fetchTransactions = useCallback(async () => {
     try {
-      const response = await transactionService.getTransactions();
-      const transactionData = Array.isArray(response.data) ? response.data : response.data.data || [];
+      const params = {};
+      if (filterCategory) params.category = filterCategory;
+      if (filterStartDate) params.startDate = filterStartDate;
+      if (filterEndDate) params.endDate = filterEndDate;
+      if (filterNotes) params.query = filterNotes;
+      if (filterType) params.type = filterType;
+      if (filterTags) params.tags = filterTags;
+
+      const response = await transactionService.getTransactions(params);
+      const transactionData = response.data.data || [];
       setTransactions(transactionData);
-      setFilteredTransactions(transactionData);
       calculateSummary(transactionData);
       calculateCategorySummary(transactionData);
       checkSpendingAlerts(transactionData);
+      setError(null);
     } catch (error) {
+      if (error.message.includes('Session expired')) {
+        setError('Session expired. Please log in again.');
+      } else {
+        setError('Failed to fetch transactions. Please try again.');
+      }
+      console.error('Fetch transactions error:', error.message);
       setTransactions([]);
-      setFilteredTransactions([]);
     }
-  }, []);
+  }, [filterCategory, filterStartDate, filterEndDate, filterNotes, filterType, filterTags]);
 
   const calculateSummary = (data) => {
-    const total = Array.isArray(data) ? data.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0) : 0;
+    const total = Array.isArray(data)
+      ? data.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0)
+      : 0;
     setSummary({ total });
   };
 
@@ -98,7 +112,6 @@ export default function Transactions() {
   };
 
   const checkSpendingAlerts = (data) => {
-    const alerts = [];
     const threshold = 200;
     const summary = Array.isArray(data)
       ? data.reduce((acc, t) => {
@@ -108,51 +121,23 @@ export default function Transactions() {
           return acc;
         }, {})
       : {};
-    Object.entries(summary).forEach(([category, total]) => {
-      if (total > threshold) {
-        alerts.push(`You’ve spent $${total.toFixed(2)} on ${category} this month, exceeding your threshold of $${threshold}.`);
+    const alerts = Object.entries(summary).reduce((acc, [category, amount]) => {
+      if (amount > threshold) {
+        acc.push(`You've spent $${amount.toFixed(2)} on ${category}, exceeding $${threshold}.`);
       }
-    });
+      return acc;
+    }, []);
     setSpendingAlerts(alerts);
   };
-
-  const applyFilters = useCallback(() => {
-    let filtered = [...transactions];
-
-    if (filterCategory) filtered = filtered.filter((t) => t.category === filterCategory);
-    if (filterStartDate && filterEndDate) {
-      const start = new Date(filterStartDate);
-      const end = new Date(filterEndDate);
-      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && start <= end) {
-        filtered = filtered.filter((t) => {
-          const txDate = new Date(t.date);
-          return !isNaN(txDate.getTime()) && txDate >= start && txDate <= end;
-        });
-      }
-    }
-    if (filterNotes) filtered = filtered.filter((t) => t.notes?.toLowerCase().includes(filterNotes.toLowerCase()));
-    if (filterType) filtered = filtered.filter((t) => t.type === filterType);
-    if (filterTags) filtered = filtered.filter((t) => (t.tags || []).includes(filterTags));
-
-    setFilteredTransactions(filtered);
-    calculateSummary(filtered);
-    calculateCategorySummary(filtered);
-    checkSpendingAlerts(filtered);
-  }, [filterCategory, filterStartDate, filterEndDate, filterNotes, filterType, filterTags, transactions]);
 
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
-
   const handleAddTransaction = async (values) => {
     try {
       const response = await transactionService.addTransaction(values);
-      setTransactions([...transactions, response.data]);
-      setOpenedAdd(false);
+      setTransactions([...transactions, response.data.data]);
       setForm({
         type: 'expense',
         subType: '',
@@ -164,15 +149,38 @@ export default function Transactions() {
         recurrence: '',
         currency: 'USD',
       });
-    } catch (error) {}
+      setOpenedAdd(false);
+      setError(null);
+    } catch (error) {
+      if (error.message.includes('Session expired')) {
+        setError('Session expired. Please log in again.');
+      } else {
+        setError('Failed to add transaction. Please try again.');
+      }
+      console.error('Add transaction error:', error.message);
+    }
   };
 
   const handleEditTransaction = async (updatedTransaction) => {
     try {
-      await transactionService.updateTransaction(editTransaction._id, updatedTransaction);
-      setTransactions(transactions.map((t) => (t._id === editTransaction._id ? updatedTransaction : t)));
+      await transactionService.updateTransaction(updatedTransaction._id, {
+        category: updatedTransaction.category,
+      });
+      setTransactions(
+        transactions.map((t) =>
+          t._id === updatedTransaction._id ? { ...t, category: updatedTransaction.category } : t
+        )
+      );
       setOpenedEdit(false);
-    } catch (error) {}
+      setError(null);
+    } catch (error) {
+      if (error.message.includes('Session expired')) {
+        setError('Session expired. Please log in again.');
+      } else {
+        setError('Failed to update transaction. Please try again.');
+      }
+      console.error('Edit transaction error:', error.message);
+    }
   };
 
   const handleDeleteTransaction = async () => {
@@ -181,7 +189,15 @@ export default function Transactions() {
       setTransactions(transactions.filter((t) => t._id !== deleteTransactionId));
       setOpenedDelete(false);
       setDeleteTransactionId(null);
-    } catch (error) {}
+      setError(null);
+    } catch (error) {
+      if (error.message.includes('Session expired')) {
+        setError('Session expired. Please log in again.');
+      } else {
+        setError('Failed to delete transaction. Please try again.');
+      }
+      console.error('Delete transaction error:', error.message);
+    }
   };
 
   const handleCSVImport = async (file) => {
@@ -189,26 +205,51 @@ export default function Transactions() {
       const formData = new FormData();
       formData.append('file', file);
       const response = await transactionService.importCSV(formData);
-      setTransactions([...transactions, ...response.data]);
-    } catch (error) {}
+      setTransactions([...transactions, ...(response.data.data || [])]);
+      setError(null);
+    } catch (error) {
+      if (error.message.includes('Session expired')) {
+        setError('Session expired. Please log in again.');
+      } else {
+        setError('Failed to import CSV. Please check the file format.');
+      }
+      console.error('CSV import error:', error.message);
+    }
   };
 
-  const handleExport = async (format) => {
+  const handleExport = async (format, retries = 3) => {
     try {
-      const response = await transactionService[`exportTransactions${format === 'csv' ? '' : 'AsPDF'}`]();
-      const blob = new Blob([response.data], { type: format === 'csv' ? 'text/csv' : 'application/pdf' });
+      const response = await transactionService[`export${format === 'csv' ? 'Transactions' : 'TransactionsAsPDF'}`]();
+      const contentType = format === 'csv' ? 'text/csv' : 'application/pdf';
+      const blob = new Blob([response.data], { type: contentType });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `transactions.${format}`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (error) {}
+      setError(null);
+    } catch (error) {
+      if (error.message.includes('Session expired')) {
+        setError('Session expired. Please log in again.');
+      } else if (retries > 0) {
+        console.warn(`${format.toUpperCase()} export failed, retrying... (${retries} attempts left)`);
+        setTimeout(() => handleExport(format, retries - 1), 1000);
+      } else {
+        setError(`Failed to export ${format.toUpperCase()}. Please try again or check server status.`);
+        console.error(`${format.toUpperCase()} export error:`, error.message);
+      }
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4 text-blue-600">Transactions</h2>
+      {error && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-4 rounded">
+          {error}
+        </div>
+      )}
       <TransactionSummary summary={summary} categorySummary={categorySummary} />
       <SpendingAlerts alerts={spendingAlerts} setAlerts={setSpendingAlerts} />
       <TransactionFilters
@@ -232,7 +273,7 @@ export default function Transactions() {
         openAdd={() => setOpenedAdd(true)}
       />
       <TransactionList
-        transactions={filteredTransactions}
+        transactions={transactions}
         categoryIcons={categoryIcons}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}

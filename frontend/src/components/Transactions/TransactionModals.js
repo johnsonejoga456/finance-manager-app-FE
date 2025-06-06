@@ -1,4 +1,3 @@
-
 export default function TransactionModals({
   openedAdd,
   closeAdd,
@@ -21,9 +20,9 @@ export default function TransactionModals({
     <>
       {/* Add Transaction Modal */}
       {openedAdd && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Add Transaction</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900 text-center">Add Transaction</h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -33,11 +32,12 @@ export default function TransactionModals({
                   tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
                 });
               }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Type</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Type</label>
                 <select
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value, subType: '' })}
                   required
@@ -48,10 +48,10 @@ export default function TransactionModals({
                   <option value="investment">Investment</option>
                 </select>
               </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Sub Type</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Sub Type</label>
                 <select
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={form.subType}
                   onChange={(e) => setForm({ ...form, subType: e.target.value })}
                 >
@@ -61,10 +61,10 @@ export default function TransactionModals({
                   ))}
                 </select>
               </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Category</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Category</label>
                 <select
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                   required
@@ -75,10 +75,10 @@ export default function TransactionModals({
                   ))}
                 </select>
               </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Amount</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Amount</label>
                 <input
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   type="number"
                   min="0"
                   value={form.amount}
@@ -87,40 +87,40 @@ export default function TransactionModals({
                   placeholder="e.g., 50"
                 />
               </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Date</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Date</label>
                 <input
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
                   required
                 />
               </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Notes</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Notes</label>
                 <input
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   type="text"
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   placeholder="e.g., Weekly shopping"
                 />
               </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Tags (comma-separated)</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Tags (comma-separated)</label>
                 <input
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   type="text"
                   value={form.tags}
                   onChange={(e) => setForm({ ...form, tags: e.target.value })}
                   placeholder="e.g., personal, work"
                 />
               </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Recurrence</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Recurrence</label>
                 <select
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={form.recurrence}
                   onChange={(e) => setForm({ ...form, recurrence: e.target.value })}
                 >
@@ -130,21 +130,21 @@ export default function TransactionModals({
                   <option value="monthly">Monthly</option>
                 </select>
               </div>
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Currency</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Currency</label>
                 <input
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   type="text"
                   value={form.currency}
                   onChange={(e) => setForm({ ...form, currency: e.target.value })}
                   placeholder="e.g., USD"
                 />
               </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+              <div className="col-span-1 sm:col-span-2 flex justify-end gap-2 mt-4">
+                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold">
                   Add
                 </button>
-                <button type="button" className="border px-4 py-2 rounded text-gray-700" onClick={closeAdd}>
+                <button type="button" className="border border-gray-300 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeAdd}>
                   Cancel
                 </button>
               </div>
@@ -155,19 +155,19 @@ export default function TransactionModals({
 
       {/* Edit Transaction Modal */}
       {openedEdit && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Edit Transaction</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900 text-center">Edit Transaction</h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleEditTransaction({ ...editTransaction, ...editForm });
               }}
             >
-              <div className="mb-3">
-                <label className="block mb-1 font-medium text-gray-700">Category</label>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Category</label>
                 <select
-                  className="border rounded px-2 py-1 w-full bg-white text-gray-700"
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={editForm.category}
                   onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
                   required
@@ -179,10 +179,10 @@ export default function TransactionModals({
                 </select>
               </div>
               <div className="flex justify-end gap-2 mt-4">
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold">
                   Save
                 </button>
-                <button type="button" className="border px-4 py-2 rounded text-gray-700" onClick={closeEdit}>
+                <button type="button" className="border border-gray-300 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeEdit}>
                   Cancel
                 </button>
               </div>
@@ -193,18 +193,18 @@ export default function TransactionModals({
 
       {/* Delete Confirmation Modal */}
       {openedDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Confirm Delete</h3>
-            <div className="text-gray-700">Are you sure you want to delete this transaction?</div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900 text-center">Confirm Delete</h3>
+            <div className="text-gray-700 text-center">Are you sure you want to delete this transaction?</div>
             <div className="flex justify-end gap-2 mt-4">
               <button
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold"
                 onClick={handleDeleteTransaction}
               >
                 Confirm
               </button>
-              <button className="border px-4 py-2 rounded text-gray-700" onClick={closeDelete}>
+              <button className="border border-gray-300 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeDelete}>
                 Cancel
               </button>
             </div>
