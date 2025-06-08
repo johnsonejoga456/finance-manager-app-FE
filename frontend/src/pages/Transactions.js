@@ -217,7 +217,7 @@ export default function Transactions() {
     }
   };
 
-  const handleExport = async (format, retries = 3) => {
+  const handleExport = async (format, retries = 2) => {
     try {
       const response = await transactionService[`export${format === 'csv' ? 'Transactions' : 'TransactionsAsPDF'}`]();
       const contentType = format === 'csv' ? 'text/csv' : 'application/pdf';
@@ -236,7 +236,7 @@ export default function Transactions() {
         console.warn(`${format.toUpperCase()} export failed, retrying... (${retries} attempts left)`);
         setTimeout(() => handleExport(format, retries - 1), 1000);
       } else {
-        setError(`Failed to export ${format.toUpperCase()}. Please try again or check server status.`);
+        setError(`Failed to export ${format.toUpperCase()}. Please try again later or contact support.`);
         console.error(`${format.toUpperCase()} export error:`, error.message);
       }
     }
