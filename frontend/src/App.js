@@ -2,7 +2,6 @@ import React, { useEffect, useState, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { AuthContext, AuthProvider } from './context/AuthContext';
-import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import Notification from './components/Notification';
@@ -49,7 +48,6 @@ function App() {
         <div className="flex flex-grow">
           {user && <Sidebar />}
           <div className="flex-1">
-            {user && <Header />}
             <main className="p-6">
               {/* Notifications */}
               {notifications.map((notification, index) => (
