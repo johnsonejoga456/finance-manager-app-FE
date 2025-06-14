@@ -1,4 +1,3 @@
-// File: src/components/Sidebar.js
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 
@@ -8,6 +7,7 @@ const Sidebar = () => {
     { path: '/dashboard/transactions', label: 'Transactions' },
     { path: '/dashboard/budgets', label: 'Budgets' },
     { path: '/dashboard/goals', label: 'Goals' },
+    { path: '/dashboard/debts', label: 'Debts' },
     { path: '/dashboard/reports', label: 'Reports' },
     { path: '/dashboard/accounts', label: 'Accounts' },
     { path: '/settings', label: 'Settings' },
