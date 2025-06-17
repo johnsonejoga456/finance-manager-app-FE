@@ -13,6 +13,7 @@ import Goals from './pages/Dashboard/Goals';
 import Transactions from './pages/Transactions';
 import Budgets from './pages/Budgets';
 import Debts from './pages/Debts';
+import Accounts from './pages/Accounts';
 
 function App() {
   const [notifications, setNotifications] = useState([]);
@@ -73,6 +74,11 @@ function App() {
                   element={user ? <Overview /> : <Navigate to="/register" />}
                 />
 
+              <Route
+                  path="/dashboard/accounts"
+                  element={user ? <Accounts /> : <Navigate to="/register" />}
+                />
+
                 <Route
                   path="/dashboard/goals"
                   element={user ? <Goals /> : <Navigate to="/register" />}
@@ -82,6 +88,7 @@ function App() {
                   path="/dashboard/debts"
                   element={user ? <Debts /> : <Navigate to="/register" />}
                 />
+
                 <Route
                   path="/dashboard/transactions"
                   element={user ? <Transactions /> : <Navigate to="/register" />}
