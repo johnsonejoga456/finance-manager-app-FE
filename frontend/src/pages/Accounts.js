@@ -6,6 +6,7 @@ import CreateAccountModal from '../components/Accounts/CreateAccountModal';
 import EditAccountModal from '../components/Accounts/EditAccountModal';
 import DeleteAccountModal from '../components/Accounts/DeleteAccountModal';
 import axios from 'axios';
+import { jsPDF } from 'jspdf';
 
 const accountTypes = ['checking', 'savings', 'credit card', 'investment', 'loan', 'cash'];
 
@@ -23,7 +24,7 @@ export default function Accounts() {
   const [filterType, setFilterType] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingTransactions, setLoading] = useState(false);
-  const transactionsPerPage = 5; // Fixed this line
+  const transactionsPerPage = 5;
 
   const [form, setForm] = useState({
     name: '',
@@ -136,6 +137,21 @@ export default function Accounts() {
     }
   }, [deleteAccountId, fetchAccounts]);
 
+  const handleUpdateBalance = useCallback(async (accountId) => {
+    try {
+      await accountService.updateBalance(accountId);
+      await fetchAccounts();
+      if (openedTransactions) {
+        const account = accounts.find(acc => acc._id === accountId);
+        if (account) await fetchTransactionsForAccount(account);
+      }
+      setError(null);
+    } catch (err) {
+      console.error('Update balance error:', err.message);
+      setError(err.message || 'Failed to update balance');
+    }
+  }, [accounts, openedTransactions, fetchAccounts, fetchTransactionsForAccount]);
+
   const handleExportCSV = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/accounts', {
@@ -169,6 +185,37 @@ export default function Accounts() {
       setError('Failed to export accounts');
     }
   }, []);
+
+  const handleExportPDF = useCallback(() => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Accounts Summary', 20, 20);
+      doc.setFontSize(12);
+      let y = 30;
+      filteredAccounts.forEach((acc, index) => {
+        doc.text(
+          `${index + 1}. ${acc.name} (${acc.type}): $${acc.balance.toFixed(2)} ${acc.currency}`,
+          20,
+          y
+        );
+        y += 10;
+        if (acc.institution) {
+          doc.text(`   Institution: ${acc.institution}`, 20, y);
+          y += 10;
+        }
+        if (acc.notes) {
+          doc.text(`   Notes: ${acc.notes}`, 20, y);
+          y += 10;
+        }
+      });
+      doc.save('accounts.pdf');
+      setError(null);
+    } catch (err) {
+      console.error('PDF export error:', err.message);
+      setError('Failed to export PDF');
+    }
+  }, [filteredAccounts]);
 
   const handleFilterType = useCallback((type) => {
     setFilterType(type);
@@ -215,6 +262,12 @@ export default function Accounts() {
         >
           Export CSV
         </button>
+        <button
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg"
+          onClick={handleExportPDF}
+        >
+          Export PDF
+        </button>
       </div>
       {filteredAccounts.length ? (
         <table className="min-w-full divide-y divide-gray-200">
@@ -242,6 +295,12 @@ export default function Accounts() {
                     onClick={() => fetchTransactionsForAccount(account)}
                   >
                     Transactions
+                  </button>
+                  <button
+                    className="text-green-600 hover:text-green-700 mr-2"
+                    onClick={() => handleUpdateBalance(account._id)}
+                  >
+                    Update Balance
                   </button>
                   <button
                     className="text-indigo-600 hover:text-indigo-800 mr-2"
@@ -283,6 +342,7 @@ export default function Accounts() {
         form={form}
         setForm={setForm}
         onSubmit={handleCreateAccount}
+        accountTypes={accountTypes}
       />
       <EditAccountModal
         isOpen={openedEdit}
@@ -290,6 +350,7 @@ export default function Accounts() {
         form={editForm}
         setForm={setEditForm}
         onSubmit={handleEditAccount}
+        accountTypes={accountTypes}
       />
       <DeleteAccountModal
         isOpen={openedDelete}

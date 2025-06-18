@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import transactionService from '../services/transactionService';
+import accountService from '../services/accountService';
 import TransactionFilters from '../components/Transactions/TransactionFilters';
 import TransactionList from '../components/Transactions/TransactionList';
 import TransactionModals from '../components/Transactions/TransactionModals';
@@ -10,6 +11,7 @@ import { faBeer, faFilm, faGasPump, faUtensils, faCreditCard, faShoppingBag, faG
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [error, setError] = useState(null);
   const [spendingAlerts, setSpendingAlerts] = useState([]);
   const [summary, setSummary] = useState({ total: 0 });
@@ -58,10 +60,20 @@ export default function Transactions() {
     tags: '',
     recurrence: '',
     currency: 'USD',
+    account: '',
   });
 
   const [editForm, setEditForm] = useState({
+    type: '',
+    subType: '',
+    amount: '',
     category: '',
+    date: '',
+    notes: '',
+    tags: '',
+    recurrence: '',
+    currency: 'USD',
+    account: '',
   });
 
   const fetchTransactions = useCallback(async () => {
@@ -91,6 +103,20 @@ export default function Transactions() {
       setTransactions([]);
     }
   }, [filterCategory, filterStartDate, filterEndDate, filterNotes, filterType, filterTags]);
+
+  const fetchAccounts = useCallback(async () => {
+    try {
+      const response = await accountService.getAccounts();
+      const fetchedAccounts = response.data.data || [];
+      setAccounts(fetchedAccounts);
+      console.log('Fetched accounts:', fetchedAccounts);
+      setError(null);
+    } catch (error) {
+      console.error('Fetch accounts error:', error.message);
+      setError('Failed to fetch accounts');
+      setAccounts([]);
+    }
+  }, []);
 
   const calculateSummary = (data) => {
     const total = Array.isArray(data)
@@ -132,11 +158,16 @@ export default function Transactions() {
 
   useEffect(() => {
     fetchTransactions();
-  }, [fetchTransactions]);
+    fetchAccounts();
+  }, [fetchTransactions, fetchAccounts]);
 
   const handleAddTransaction = async (values) => {
     try {
-      const response = await transactionService.addTransaction(values);
+      const response = await transactionService.addTransaction({
+        ...values,
+        amount: parseFloat(values.amount),
+        tags: values.tags ? values.tags.split(',').map(tag => tag.trim()) : [],
+      });
       setTransactions([...transactions, response.data.data]);
       setForm({
         type: 'expense',
@@ -148,9 +179,11 @@ export default function Transactions() {
         tags: '',
         recurrence: '',
         currency: 'USD',
+        account: '',
       });
       setOpenedAdd(false);
       setError(null);
+      fetchTransactions(); // Refresh to ensure balance updates
     } catch (error) {
       if (error.message.includes('Session expired')) {
         setError('Session expired. Please log in again.');
@@ -164,15 +197,26 @@ export default function Transactions() {
   const handleEditTransaction = async (updatedTransaction) => {
     try {
       await transactionService.updateTransaction(updatedTransaction._id, {
+        type: updatedTransaction.type,
+        subType: updatedTransaction.subType,
+        amount: parseFloat(updatedTransaction.amount),
         category: updatedTransaction.category,
+        date: updatedTransaction.date,
+        notes: updatedTransaction.notes,
+        tags: updatedTransaction.tags ? updatedTransaction.tags.split(',').map(tag => tag.trim()) : [],
+        recurrence: updatedTransaction.recurrence,
+        currency: updatedTransaction.currency,
+        account: updatedTransaction.account,
       });
       setTransactions(
         transactions.map((t) =>
-          t._id === updatedTransaction._id ? { ...t, category: updatedTransaction.category } : t
+          t._id === updatedTransaction._id ? { ...t, ...updatedTransaction } : t
         )
       );
       setOpenedEdit(false);
+      setEditTransaction(null);
       setError(null);
+      fetchTransactions(); // Refresh to ensure balance updates
     } catch (error) {
       if (error.message.includes('Session expired')) {
         setError('Session expired. Please log in again.');
@@ -190,6 +234,7 @@ export default function Transactions() {
       setOpenedDelete(false);
       setDeleteTransactionId(null);
       setError(null);
+      fetchTransactions(); // Refresh to ensure balance updates
     } catch (error) {
       if (error.message.includes('Session expired')) {
         setError('Session expired. Please log in again.');
@@ -207,6 +252,7 @@ export default function Transactions() {
       const response = await transactionService.importCSV(formData);
       setTransactions([...transactions, ...(response.data.data || [])]);
       setError(null);
+      fetchTransactions(); // Refresh to ensure balance updates
     } catch (error) {
       if (error.message.includes('Session expired')) {
         setError('Session expired. Please log in again.');
@@ -275,6 +321,7 @@ export default function Transactions() {
       <TransactionList
         transactions={transactions}
         categoryIcons={categoryIcons}
+        accounts={accounts} // Pass accounts for display
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         transactionsPerPage={transactionsPerPage}
@@ -301,6 +348,7 @@ export default function Transactions() {
         handleDeleteTransaction={handleDeleteTransaction}
         categories={categories}
         subTypes={subTypes}
+        accounts={accounts} // Pass accounts for dropdown
       />
     </div>
   );

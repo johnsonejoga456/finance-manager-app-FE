@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 export default function TransactionModals({
   openedAdd,
   closeAdd,
@@ -15,6 +17,7 @@ export default function TransactionModals({
   handleDeleteTransaction,
   categories,
   subTypes,
+  accounts,
 }) {
   return (
     <>
@@ -98,6 +101,19 @@ export default function TransactionModals({
                 />
               </div>
               <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Account</label>
+                <select
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={form.account}
+                  onChange={(e) => setForm({ ...form, account: e.target.value })}
+                >
+                  <option value="">No Account</option>
+                  {accounts.map((acc) => (
+                    <option key={acc._id} value={acc._id}>{acc.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-4">
                 <label className="block mb-1 text-sm font-semibold text-gray-700">Notes</label>
                 <input
                   className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -156,14 +172,47 @@ export default function TransactionModals({
       {/* Edit Transaction Modal */}
       {openedEdit && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-semibold mb-4 text-gray-900 text-center">Edit Transaction</h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleEditTransaction({ ...editTransaction, ...editForm });
+                handleEditTransaction({
+                  ...editTransaction,
+                  ...editForm,
+                  amount: Number(editForm.amount),
+                  tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
+                });
               }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Type</label>
+                <select
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editForm.type}
+                  onChange={(e) => setEditForm({ ...editForm, type: e.target.value, subType: '' })}
+                  required
+                >
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
+                  <option value="transfer">Transfer</option>
+                  <option value="investment">Investment</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Sub Type</label>
+                <select
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editForm.subType}
+                  onChange={(e) => setEditForm({ ...editForm, subType: e.target.value })}
+                >
+                  <option value="">Select sub type</option>
+                  {(subTypes[editForm.type] || []).map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+              </div>
               <div className="mb-4">
                 <label className="block mb-1 text-sm font-semibold text-gray-700">Category</label>
                 <select
@@ -178,7 +227,85 @@ export default function TransactionModals({
                   ))}
                 </select>
               </div>
-              <div className="flex justify-end gap-2 mt-4">
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Amount</label>
+                <input
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="number"
+                  min="0"
+                  value={editForm.amount}
+                  onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                  required
+                  placeholder="e.g., 50"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Date</label>
+                <input
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="date"
+                  value={editForm.date}
+                  onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Account</label>
+                <select
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editForm.account}
+                  onChange={(e) => setEditForm({ ...editForm, account: e.target.value })}
+                >
+                  <option value="">No Account</option>
+                  {accounts.map((acc) => (
+                    <option key={acc._id} value={acc._id}>{acc.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Notes</label>
+                <input
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="text"
+                  value={editForm.notes}
+                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  placeholder="e.g., Weekly shopping"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Tags (comma-separated)</label>
+                <input
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="text"
+                  value={editForm.tags}
+                  onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+                  placeholder="e.g., personal, work"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Recurrence</label>
+                <select
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editForm.recurrence}
+                  onChange={(e) => setEditForm({ ...editForm, recurrence: e.target.value })}
+                >
+                  <option value="">None</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Currency</label>
+                <input
+                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="text"
+                  value={editForm.currency}
+                  onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+                  placeholder="e.g., USD"
+                />
+              </div>
+              <div className="col-span-1 sm:col-span-2 flex justify-end gap-2 mt-4">
                 <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold">
                   Save
                 </button>
@@ -214,3 +341,23 @@ export default function TransactionModals({
     </>
   );
 }
+
+TransactionModals.propTypes = {
+  openedAdd: PropTypes.bool.isRequired,
+  closeAdd: PropTypes.func.isRequired,
+  openedEdit: PropTypes.bool.isRequired,
+  closeEdit: PropTypes.func.isRequired,
+  openedDelete: PropTypes.bool.isRequired,
+  closeDelete: PropTypes.func.isRequired,
+  form: PropTypes.object.isRequired,
+  setForm: PropTypes.func.isRequired,
+  editForm: PropTypes.object.isRequired,
+  setEditForm: PropTypes.func.isRequired,
+  editTransaction: PropTypes.object,
+  handleAddTransaction: PropTypes.func.isRequired,
+  handleEditTransaction: PropTypes.func.isRequired,
+  handleDeleteTransaction: PropTypes.func.isRequired,
+  categories: PropTypes.array.isRequired,
+  subTypes: PropTypes.object.isRequired,
+  accounts: PropTypes.array.isRequired,
+};

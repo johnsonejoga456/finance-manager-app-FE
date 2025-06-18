@@ -1,9 +1,10 @@
-
-import Transaction from './Transaction'
+import PropTypes from 'prop-types';
+import Transaction from './Transaction';
 
 export default function TransactionList({
   transactions,
   categoryIcons,
+  accounts,
   currentPage,
   setCurrentPage,
   transactionsPerPage,
@@ -25,6 +26,7 @@ export default function TransactionList({
             key={t._id}
             transaction={t}
             categoryIcons={categoryIcons}
+            accounts={accounts}
             setEditTransaction={setEditTransaction}
             setEditForm={setEditForm}
             setDeleteTransactionId={setDeleteTransactionId}
@@ -33,14 +35,14 @@ export default function TransactionList({
           />
         ))
       ) : (
-        <div className="text-gray-500">No transactions available</div>
+        <div className="text-gray-500 text-center py-4">No transactions available</div>
       )}
       {Array.isArray(transactions) && transactions.length > transactionsPerPage && (
         <div className="flex justify-center mt-4">
           {Array.from({ length: Math.ceil(transactions.length / transactionsPerPage) }, (_, i) => (
             <button
               key={i}
-              className={`mx-1 px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`mx-1 px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               onClick={() => setCurrentPage(i + 1)}
             >
               {i + 1}
@@ -51,3 +53,17 @@ export default function TransactionList({
     </div>
   );
 }
+
+TransactionList.propTypes = {
+  transactions: PropTypes.array.isRequired,
+  categoryIcons: PropTypes.object.isRequired,
+  accounts: PropTypes.array.isRequired,
+  currentPage: PropTypes.number.isRequired,
+  setCurrentPage: PropTypes.func.isRequired,
+  transactionsPerPage: PropTypes.number.isRequired,
+  setEditTransaction: PropTypes.func.isRequired,
+  setEditForm: PropTypes.func.isRequired,
+  setDeleteTransactionId: PropTypes.func.isRequired,
+  openEdit: PropTypes.func.isRequired,
+  openDelete: PropTypes.func.isRequired,
+};
