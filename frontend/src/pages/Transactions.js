@@ -6,6 +6,7 @@ import TransactionList from '../components/Transactions/TransactionList';
 import TransactionModals from '../components/Transactions/TransactionModals';
 import TransactionSummary from '../components/Transactions/TransactionSummary';
 import SpendingAlerts from '../components/Transactions/SpendingAlerts';
+import BalanceChart from '../components/Accounts/BalanceChart';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBeer, faFilm, faGasPump, faUtensils, faCreditCard, faShoppingBag, faGift, faCog } from '@fortawesome/free-solid-svg-icons';
 
@@ -28,6 +29,7 @@ export default function Transactions() {
   const [deleteTransactionId, setDeleteTransactionId] = useState(null);
   const [editTransaction, setEditTransaction] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalTransactions, setTotalTransactions] = useState(0);
   const transactionsPerPage = 5;
 
   const categories = ['Bar', 'Entertainment', 'Fuel', 'Shoes/Clothing', 'Credit Card', 'Eating Out', 'Technology', 'Gifts', 'Other'];
@@ -78,7 +80,10 @@ export default function Transactions() {
 
   const fetchTransactions = useCallback(async () => {
     try {
-      const params = {};
+      const params = {
+        page: currentPage,
+        limit: transactionsPerPage,
+      };
       if (filterCategory) params.category = filterCategory;
       if (filterStartDate) params.startDate = filterStartDate;
       if (filterEndDate) params.endDate = filterEndDate;
@@ -87,11 +92,12 @@ export default function Transactions() {
       if (filterTags) params.tags = filterTags;
 
       const response = await transactionService.getTransactions(params);
-      const transactionData = response.data.data || [];
-      setTransactions(transactionData);
-      calculateSummary(transactionData);
-      calculateCategorySummary(transactionData);
-      checkSpendingAlerts(transactionData);
+      const { data, total } = response.data;
+      setTransactions(data || []);
+      setTotalTransactions(total || 0);
+      calculateSummary(data || []);
+      calculateCategorySummary(data || []);
+      checkSpendingAlerts(data || []);
       setError(null);
     } catch (error) {
       if (error.message.includes('Session expired')) {
@@ -101,8 +107,9 @@ export default function Transactions() {
       }
       console.error('Fetch transactions error:', error.message);
       setTransactions([]);
+      setTotalTransactions(0);
     }
-  }, [filterCategory, filterStartDate, filterEndDate, filterNotes, filterType, filterTags]);
+  }, [filterCategory, filterStartDate, filterEndDate, filterNotes, filterType, filterTags, currentPage]);
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -163,12 +170,11 @@ export default function Transactions() {
 
   const handleAddTransaction = async (values) => {
     try {
-      const response = await transactionService.addTransaction({
+      await transactionService.addTransaction({
         ...values,
         amount: parseFloat(values.amount),
         tags: values.tags ? values.tags.split(',').map(tag => tag.trim()) : [],
       });
-      setTransactions([...transactions, response.data.data]);
       setForm({
         type: 'expense',
         subType: '',
@@ -183,7 +189,7 @@ export default function Transactions() {
       });
       setOpenedAdd(false);
       setError(null);
-      fetchTransactions(); // Refresh to ensure balance updates
+      await fetchTransactions();
     } catch (error) {
       if (error.message.includes('Session expired')) {
         setError('Session expired. Please log in again.');
@@ -208,15 +214,10 @@ export default function Transactions() {
         currency: updatedTransaction.currency,
         account: updatedTransaction.account,
       });
-      setTransactions(
-        transactions.map((t) =>
-          t._id === updatedTransaction._id ? { ...t, ...updatedTransaction } : t
-        )
-      );
       setOpenedEdit(false);
       setEditTransaction(null);
       setError(null);
-      fetchTransactions(); // Refresh to ensure balance updates
+      await fetchTransactions();
     } catch (error) {
       if (error.message.includes('Session expired')) {
         setError('Session expired. Please log in again.');
@@ -230,11 +231,10 @@ export default function Transactions() {
   const handleDeleteTransaction = async () => {
     try {
       await transactionService.deleteTransaction(deleteTransactionId);
-      setTransactions(transactions.filter((t) => t._id !== deleteTransactionId));
       setOpenedDelete(false);
       setDeleteTransactionId(null);
       setError(null);
-      fetchTransactions(); // Refresh to ensure balance updates
+      await fetchTransactions();
     } catch (error) {
       if (error.message.includes('Session expired')) {
         setError('Session expired. Please log in again.');
@@ -249,10 +249,9 @@ export default function Transactions() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await transactionService.importCSV(formData);
-      setTransactions([...transactions, ...(response.data.data || [])]);
+      await transactionService.importCSV(formData);
       setError(null);
-      fetchTransactions(); // Refresh to ensure balance updates
+      await fetchTransactions();
     } catch (error) {
       if (error.message.includes('Session expired')) {
         setError('Session expired. Please log in again.');
@@ -263,7 +262,7 @@ export default function Transactions() {
     }
   };
 
-  const handleExport = async (format, retries = 2) => {
+  const handleExport = async (format, retries = 3) => {
     try {
       const response = await transactionService[`export${format === 'csv' ? 'Transactions' : 'TransactionsAsPDF'}`]();
       const contentType = format === 'csv' ? 'text/csv' : 'application/pdf';
@@ -292,10 +291,12 @@ export default function Transactions() {
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4 text-blue-600">Transactions</h2>
       {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-4 rounded">
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-4 rounded flex justify-between items-center">
           {error}
+          <button className="text-red-700" onClick={() => setError(null)}>✕</button>
         </div>
       )}
+      <BalanceChart transactions={transactions} />
       <TransactionSummary summary={summary} categorySummary={categorySummary} />
       <SpendingAlerts alerts={spendingAlerts} setAlerts={setSpendingAlerts} />
       <TransactionFilters
@@ -316,20 +317,21 @@ export default function Transactions() {
         transactions={transactions}
         handleCSVImport={handleCSVImport}
         handleExport={handleExport}
-        openAdd={() => setOpenedAdd(true)}
+        openAddTransaction={() => setOpenedAdd(true)}
       />
       <TransactionList
         transactions={transactions}
         categoryIcons={categoryIcons}
-        accounts={accounts} // Pass accounts for display
+        accounts={accounts}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         transactionsPerPage={transactionsPerPage}
+        totalTransactions={totalTransactions}
         setEditTransaction={setEditTransaction}
         setEditForm={setEditForm}
         setDeleteTransactionId={setDeleteTransactionId}
-        openEdit={() => setOpenedEdit(true)}
-        openDelete={() => setOpenedDelete(true)}
+        openEditTransaction={() => setOpenedEdit(true)}
+        openDeleteTransaction={() => setOpenedDelete(true)}
       />
       <TransactionModals
         openedAdd={openedAdd}
@@ -348,7 +350,7 @@ export default function Transactions() {
         handleDeleteTransaction={handleDeleteTransaction}
         categories={categories}
         subTypes={subTypes}
-        accounts={accounts} // Pass accounts for dropdown
+        accounts={accounts}
       />
     </div>
   );

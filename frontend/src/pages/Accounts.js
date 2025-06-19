@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import accountService from '../services/accountService';
-import TransactionsModal from '../components/Budgets/TransactionsModal';
+import TransactionsModal from '../components/Transactions/TransactionModals';
 import ErrorAlert from '../components/Budgets/ErrorAlert';
 import CreateAccountModal from '../components/Accounts/CreateAccountModal';
 import EditAccountModal from '../components/Accounts/EditAccountModal';
 import DeleteAccountModal from '../components/Accounts/DeleteAccountModal';
-import axios from 'axios';
-import { jsPDF } from 'jspdf';
 
 const accountTypes = ['checking', 'savings', 'credit card', 'investment', 'loan', 'cash'];
 
 export default function Accounts() {
   const [accounts, setAccounts] = useState([]);
   const [filteredAccounts, setFilteredAccounts] = useState([]);
+  const [totalAccounts, setTotalAccounts] = useState(0);
   const [transactions, setTransactions] = useState([]);
+  const [totalTransactions, setTotalTransactions] = useState(0);
   const [error, setError] = useState(null);
   const [openedCreate, setOpenedCreate] = useState(false);
   const [openedEdit, setOpenedEdit] = useState(false);
@@ -21,9 +21,12 @@ export default function Accounts() {
   const [openedTransactions, setOpenedTransactions] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
   const [deleteAccountId, setDeleteAccountId] = useState(null);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [filterType, setFilterType] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentAccountPage, setCurrentAccountPage] = useState(1);
+  const [currentTransactionPage, setCurrentTransactionPage] = useState(1);
   const [loadingTransactions, setLoading] = useState(false);
+  const accountsPerPage = 10;
   const transactionsPerPage = 5;
 
   const [form, setForm] = useState({
@@ -46,38 +49,46 @@ export default function Accounts() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const response = await accountService.getAccounts();
-      const fetchedAccounts = Array.isArray(response.data.data) ? response.data.data : [];
-      setAccounts(fetchedAccounts);
-      setFilteredAccounts(fetchedAccounts);
-      console.log('Fetched accounts:', fetchedAccounts);
+      const { accounts, total } = await accountService.getAccounts({
+        page: currentAccountPage,
+        limit: accountsPerPage,
+      });
+      setAccounts(accounts || []);
+      setFilteredAccounts(accounts || []); // Ensure array
+      setTotalAccounts(total || 0);
+      console.log('Fetched accounts:', accounts);
       setError(null);
     } catch (err) {
       console.error('Fetch accounts error:', err.message);
       setError(err.message || 'Failed to fetch accounts');
       setAccounts([]);
       setFilteredAccounts([]);
+      setTotalAccounts(0);
     }
-  }, []);
+  }, [currentAccountPage]);
 
   const fetchTransactionsForAccount = useCallback(async (account) => {
     try {
       setLoading(true);
-      const response = await accountService.getAccountTransactions(account._id);
-      const fetchedTransactions = Array.isArray(response.data.data) ? response.data.data : [];
-      setTransactions(fetchedTransactions);
-      console.log('Fetched transactions:', fetchedTransactions);
-      setCurrentPage(1);
+      const { transactions, total } = await accountService.getAccountTransactions(account._id, {
+        page: currentTransactionPage,
+        limit: transactionsPerPage,
+      });
+      setTransactions(transactions || []);
+      setTotalTransactions(total || 0);
+      setSelectedAccountId(account._id);
+      console.log('Fetched transactions:', transactions);
       setOpenedTransactions(true);
       setError(null);
     } catch (err) {
       console.error('Fetch transactions error:', err.message);
       setError(err.message || 'Failed to fetch transactions');
       setTransactions([]);
+      setTotalTransactions(0);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentTransactionPage]);
 
   const handleCreateAccount = useCallback(async () => {
     if (!form.name || !form.type || !form.balance || !form.currency) {
@@ -91,7 +102,12 @@ export default function Accounts() {
       });
       await fetchAccounts();
       setForm({
-        name: '', type: '', balance: '', currency: 'USD', institution: '', notes: '',
+        name: '',
+        type: '',
+        balance: '',
+        currency: 'USD',
+        institution: '',
+        notes: '',
       });
       setOpenedCreate(false);
       setError(null);
@@ -113,7 +129,12 @@ export default function Accounts() {
       });
       await fetchAccounts();
       setEditForm({
-        name: '', type: '', balance: '', currency: 'USD', institution: '', notes: '',
+        name: '',
+        type: '',
+        balance: '',
+        currency: 'USD',
+        institution: '',
+        notes: '',
       });
       setOpenedEdit(false);
       setEditingAccount(null);
@@ -124,9 +145,9 @@ export default function Accounts() {
     }
   }, [editForm, editingAccount, fetchAccounts]);
 
-  const handleDeleteAccount = useCallback(async () => {
+  const handleDeleteAccount = useCallback(async (cascade) => {
     try {
-      await accountService.deleteAccount(deleteAccountId);
+      await accountService.deleteAccount(deleteAccountId, cascade);
       await fetchAccounts();
       setOpenedDelete(false);
       setDeleteAccountId(null);
@@ -141,88 +162,42 @@ export default function Accounts() {
     try {
       await accountService.updateBalance(accountId);
       await fetchAccounts();
-      if (openedTransactions) {
-        const account = accounts.find(acc => acc._id === accountId);
-        if (account) await fetchTransactionsForAccount(account);
+      if (openedTransactions && selectedAccountId === accountId) {
+        await fetchTransactionsForAccount({ _id: accountId });
       }
       setError(null);
     } catch (err) {
       console.error('Update balance error:', err.message);
       setError(err.message || 'Failed to update balance');
     }
-  }, [accounts, openedTransactions, fetchAccounts, fetchTransactionsForAccount]);
+  }, [openedTransactions, selectedAccountId, fetchAccounts, fetchTransactionsForAccount]);
 
   const handleExportCSV = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/accounts', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        responseType: 'json',
-      });
-      const accounts = Array.isArray(response.data.data) ? response.data.data : [];
-      const csvContent = [
-        ['Name', 'Type', 'Balance', 'Currency', 'Institution', 'Notes'],
-        ...accounts.map(acc => [
-          `"${acc.name}"`,
-          acc.type,
-          acc.balance.toFixed(2),
-          acc.currency,
-          `"${acc.institution || ''}"`,
-          `"${acc.notes || ''}"`,
-        ]),
-      ].map(row => row.join(',')).join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'accounts.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      await accountService.exportToCSV();
       setError(null);
     } catch (err) {
       console.error('Export accounts error:', err.message);
-      setError('Failed to export accounts');
+      setError(err.message || 'Failed to export accounts');
     }
   }, []);
 
-  const handleExportPDF = useCallback(() => {
+  const handleExportPDF = useCallback(async () => {
     try {
-      const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text('Accounts Summary', 20, 20);
-      doc.setFontSize(12);
-      let y = 30;
-      filteredAccounts.forEach((acc, index) => {
-        doc.text(
-          `${index + 1}. ${acc.name} (${acc.type}): $${acc.balance.toFixed(2)} ${acc.currency}`,
-          20,
-          y
-        );
-        y += 10;
-        if (acc.institution) {
-          doc.text(`   Institution: ${acc.institution}`, 20, y);
-          y += 10;
-        }
-        if (acc.notes) {
-          doc.text(`   Notes: ${acc.notes}`, 20, y);
-          y += 10;
-        }
-      });
-      doc.save('accounts.pdf');
+      await accountService.exportToPDF();
       setError(null);
     } catch (err) {
-      console.error('PDF export error:', err.message);
-      setError('Failed to export PDF');
+      console.error('Export PDF error:', err.message);
+      setError(err.message || 'Failed to export PDF');
     }
-  }, [filteredAccounts]);
+  }, []);
 
   const handleFilterType = useCallback((type) => {
     setFilterType(type);
-    if (type) {
+    if (type && Array.isArray(accounts)) { // Add safety check
       setFilteredAccounts(accounts.filter(acc => acc.type === type));
     } else {
-      setFilteredAccounts(accounts);
+      setFilteredAccounts(accounts || []); // Ensure array
     }
   }, [accounts]);
 
@@ -233,6 +208,8 @@ export default function Accounts() {
   useEffect(() => {
     handleFilterType(filterType);
   }, [accounts, filterType, handleFilterType]);
+
+  const totalAccountPages = Math.ceil(totalAccounts / accountsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -269,70 +246,91 @@ export default function Accounts() {
           Export PDF
         </button>
       </div>
-      {filteredAccounts.length ? (
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Currency</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Institution</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAccounts.map(account => (
-              <tr key={account._id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{account.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{account.type}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${account.balance.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{account.currency}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{account.institution || '-'}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    className="text-blue-600 hover:text-blue-800 mr-2"
-                    onClick={() => fetchTransactionsForAccount(account)}
-                  >
-                    Transactions
-                  </button>
-                  <button
-                    className="text-green-600 hover:text-green-700 mr-2"
-                    onClick={() => handleUpdateBalance(account._id)}
-                  >
-                    Update Balance
-                  </button>
-                  <button
-                    className="text-indigo-600 hover:text-indigo-800 mr-2"
-                    onClick={() => {
-                      setEditingAccount(account);
-                      setEditForm({
-                        name: account.name,
-                        type: account.type,
-                        balance: account.balance.toString(),
-                        currency: account.currency,
-                        institution: account.institution || '',
-                        notes: account.notes || '',
-                      });
-                      setOpenedEdit(true);
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="text-red-600 hover:text-red-800"
-                    onClick={() => {
-                      setDeleteAccountId(account._id);
-                      setOpenedDelete(true);
-                    }}
-                  >
-                    Delete
-                  </button>
-                </td>
+      {Array.isArray(filteredAccounts) && filteredAccounts.length ? ( // Add safety check
+        <>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Currency</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Institution</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredAccounts.map(account => (
+                <tr key={account._id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{account.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{account.type}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${account.balance.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{account.currency}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{account.institution || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      className="text-blue-600 hover:text-blue-800 mr-2"
+                      onClick={() => fetchTransactionsForAccount(account)}
+                    >
+                      Transactions
+                    </button>
+                    <button
+                      className="text-green-600 hover:text-green-700 mr-2"
+                      onClick={() => handleUpdateBalance(account._id)}
+                    >
+                      Update Balance
+                    </button>
+                    <button
+                      className="text-indigo-600 hover:text-indigo-800 mr-2"
+                      onClick={() => {
+                        setEditingAccount(account);
+                        setEditForm({
+                          name: account.name,
+                          type: account.type,
+                          balance: account.balance.toString(),
+                          currency: account.currency,
+                          institution: account.institution || '',
+                          notes: account.notes || '',
+                        });
+                        setOpenedEdit(true);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="text-red-600 hover:text-red-800"
+                      onClick={() => {
+                        setDeleteAccountId(account._id);
+                        setOpenedDelete(true);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="mt-4 flex justify-between items-center">
+            <button
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg disabled:opacity-50"
+              onClick={() => setCurrentAccountPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentAccountPage === 1}
+            >
+              Previous
+            </button>
+            <span className="text-gray-700">
+              Page {currentAccountPage} of {totalAccountPages}
+            </span>
+            <button
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg disabled:opacity-50"
+              onClick={() => setCurrentAccountPage(prev => Math.min(prev + 1, totalAccountPages))}
+              disabled={currentAccountPage === totalAccountPages}
+            >
+              Next
+            </button>
+          </div>
+        </>
       ) : (
         <p className="text-gray-500">No accounts found</p>
       )}
@@ -342,7 +340,6 @@ export default function Accounts() {
         form={form}
         setForm={setForm}
         onSubmit={handleCreateAccount}
-        accountTypes={accountTypes}
       />
       <EditAccountModal
         isOpen={openedEdit}
@@ -350,7 +347,6 @@ export default function Accounts() {
         form={editForm}
         setForm={setEditForm}
         onSubmit={handleEditAccount}
-        accountTypes={accountTypes}
       />
       <DeleteAccountModal
         isOpen={openedDelete}
@@ -362,12 +358,15 @@ export default function Accounts() {
         onClose={() => {
           setOpenedTransactions(false);
           setTransactions([]);
+          setTotalTransactions(0);
         }}
         transactions={transactions}
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
+        totalTransactions={totalTransactions}
+        currentPage={currentTransactionPage}
+        setCurrentPage={setCurrentTransactionPage}
         transactionsPerPage={transactionsPerPage}
         loading={loadingTransactions}
+        accountId={selectedAccountId}
       />
     </div>
   );

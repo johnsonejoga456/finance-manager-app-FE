@@ -1,5 +1,7 @@
 import PropTypes from 'prop-types';
 
+const currencies = ['USD', 'EUR', 'GBP'];
+
 export default function TransactionModals({
   openedAdd,
   closeAdd,
@@ -19,6 +21,13 @@ export default function TransactionModals({
   subTypes,
   accounts,
 }) {
+  const validateTags = (tagsString) => {
+    return tagsString
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+  };
+
   return (
     <>
       {/* Add Transaction Modal */}
@@ -29,10 +38,15 @@ export default function TransactionModals({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                const tags = validateTags(form.tags);
+                if (!tags.length && form.tags) {
+                  alert('Please enter valid tags or leave empty');
+                  return;
+                }
                 handleAddTransaction({
                   ...form,
                   amount: Number(form.amount),
-                  tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+                  tags,
                 });
               }}
               className="grid grid-cols-1 sm:grid-cols-2 gap-4"
@@ -148,13 +162,17 @@ export default function TransactionModals({
               </div>
               <div className="mb-4">
                 <label className="block mb-1 text-sm font-semibold text-gray-700">Currency</label>
-                <input
+                <select
                   className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  type="text"
                   value={form.currency}
                   onChange={(e) => setForm({ ...form, currency: e.target.value })}
-                  placeholder="e.g., USD"
-                />
+                  required
+                >
+                  <option value="">Select Currency</option>
+                  {currencies.map((currency) => (
+                    <option key={currency} value={currency}>{currency}</option>
+                  ))}
+                </select>
               </div>
               <div className="col-span-1 sm:col-span-2 flex justify-end gap-2 mt-4">
                 <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold">
@@ -177,11 +195,16 @@ export default function TransactionModals({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                const tags = validateTags(editForm.tags);
+                if (!tags.length && editForm.tags) {
+                  alert('Please enter valid tags or leave empty');
+                  return;
+                }
                 handleEditTransaction({
                   ...editTransaction,
                   ...editForm,
                   amount: Number(editForm.amount),
-                  tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
+                  tags,
                 });
               }}
               className="grid grid-cols-1 sm:grid-cols-2 gap-4"
@@ -297,13 +320,17 @@ export default function TransactionModals({
               </div>
               <div className="mb-4">
                 <label className="block mb-1 text-sm font-semibold text-gray-700">Currency</label>
-                <input
+                <select
                   className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  type="text"
                   value={editForm.currency}
                   onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
-                  placeholder="e.g., USD"
-                />
+                  required
+                >
+                  <option value="">Select Currency</option>
+                  {currencies.map((currency) => (
+                    <option key={currency} value={currency}>{currency}</option>
+                  ))}
+                </select>
               </div>
               <div className="col-span-1 sm:col-span-2 flex justify-end gap-2 mt-4">
                 <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold">
@@ -357,7 +384,12 @@ TransactionModals.propTypes = {
   handleAddTransaction: PropTypes.func.isRequired,
   handleEditTransaction: PropTypes.func.isRequired,
   handleDeleteTransaction: PropTypes.func.isRequired,
-  categories: PropTypes.array.isRequired,
-  subTypes: PropTypes.object.isRequired,
-  accounts: PropTypes.array.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+  subTypes: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
+  accounts: PropTypes.arrayOf(
+    PropTypes.shape({
+      _id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+    })
+  ).isRequired,
 };
