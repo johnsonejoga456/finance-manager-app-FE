@@ -10,6 +10,7 @@ const Sidebar = () => {
     { path: '/dashboard/debts', label: 'Debts' },
     { path: '/dashboard/reports', label: 'Reports' },
     { path: '/dashboard/accounts', label: 'Accounts' },
+    { path: '/dashboard/investments', label: 'Investments' },
     { path: '/settings', label: 'Settings' },
   ];
 

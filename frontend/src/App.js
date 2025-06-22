@@ -14,6 +14,7 @@ import Transactions from './pages/Transactions';
 import Budgets from './pages/Budgets';
 import Debts from './pages/Debts';
 import Accounts from './pages/Accounts';
+import Investments from './pages/Investments';
 
 function App() {
   const [notifications, setNotifications] = useState([]);
@@ -97,6 +98,11 @@ function App() {
                 <Route
                   path="/dashboard/budgets"
                   element={user ? <Budgets /> : <Navigate to="/register" />}
+                />
+
+              <Route
+                  path="/dashboard/investments"
+                  element={user ? <Investments /> : <Navigate to="/register" />}
                 />
 
                 {/* Default Route */}
