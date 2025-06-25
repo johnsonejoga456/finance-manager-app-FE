@@ -2,6 +2,17 @@ import { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
 import PropTypes from 'prop-types';
 
+const investmentTypes = ['stock', 'bond', 'mutual fund', 'ETF', 'real estate', 'crypto'];
+
+const COLORS = [
+  'rgba(59, 130, 246, 0.8)',  // Blue
+  'rgba(16, 185, 129, 0.8)',  // Green
+  'rgba(245, 158, 11, 0.8)',  // Amber
+  'rgba(239, 68, 68, 0.8)',   // Red
+  'rgba(139, 92, 246, 0.8)',  // Violet
+  'rgba(34, 197, 94, 0.8)',   // Emerald
+];
+
 const InvestmentChart = ({ investments, chartType }) => {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
@@ -11,81 +22,90 @@ const InvestmentChart = ({ investments, chartType }) => {
 
     const ctx = chartRef.current.getContext('2d');
 
-    // Destroy existing chart if it exists
+    // Cleanup previous chart
     if (chartInstanceRef.current) {
       chartInstanceRef.current.destroy();
     }
 
-    let chartConfig = {};
+    let config = {};
 
     if (chartType === 'time') {
-      // Line chart: Portfolio value over time
-      const sortedInvestments = [...investments].sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
-      const dates = sortedInvestments.map(inv => new Date(inv.purchaseDate).toLocaleDateString());
-      const values = sortedInvestments.reduce((acc, inv, idx) => {
-        const prevValue = idx > 0 ? acc[idx - 1] : 0;
-        return [...acc, prevValue + (inv.currentValue || 0)];
+      // Line Chart: Total Portfolio Value over time
+      const sorted = [...investments].sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
+      const labels = sorted.map(inv => new Date(inv.purchaseDate).toLocaleDateString());
+      const values = sorted.reduce((acc, inv, idx) => {
+        const prev = idx > 0 ? acc[idx - 1] : 0;
+        return [...acc, prev + (inv.currentValue || 0)];
       }, []);
 
-      chartConfig = {
+      config = {
         type: 'line',
         data: {
-          labels: dates,
+          labels,
           datasets: [{
             label: 'Portfolio Value ($)',
             data: values,
-            borderColor: 'rgba(59, 130, 246, 1)',
+            borderColor: COLORS[0],
             backgroundColor: 'rgba(59, 130, 246, 0.2)',
             fill: true,
-            tension: 0.3,
+            tension: 0.4,
+            pointRadius: 3,
           }],
         },
         options: {
           responsive: true,
           scales: {
-            x: { title: { display: true, text: 'Purchase Date' } },
+            x: { title: { display: true, text: 'Date' } },
             y: { title: { display: true, text: 'Value ($)' }, beginAtZero: true },
+          },
+          plugins: {
+            legend: { display: true },
+            title: { display: true, text: 'Portfolio Growth Over Time' },
           },
         },
       };
     } else {
-      // Pie chart: Value by type
+      // Pie Chart: Value distribution by investment type
       const typeTotals = investmentTypes.reduce((acc, type) => {
         const total = investments
           .filter(inv => inv.type === type)
           .reduce((sum, inv) => sum + (inv.currentValue || 0), 0);
-        return { ...acc, [type]: total };
+        if (total > 0) acc[type] = total;
+        return acc;
       }, {});
-      const labels = Object.keys(typeTotals).filter(type => typeTotals[type] > 0);
+
+      const labels = Object.keys(typeTotals);
       const data = labels.map(type => typeTotals[type]);
 
-      chartConfig = {
+      config = {
         type: 'pie',
         data: {
           labels,
           datasets: [{
             data,
-            backgroundColor: [
-              'rgba(59, 130, 246, 0.8)',
-              'rgba(16, 185, 129, 0.8)',
-              'rgba(245, 158, 11, 0.8)',
-              'rgba(239, 68, 68, 0.8)',
-              'rgba(139, 92, 246, 0.8)',
-              'rgba(34, 197, 94, 0.8)',
-            ],
+            backgroundColor: COLORS.slice(0, labels.length),
+            borderWidth: 1,
           }],
         },
         options: {
           responsive: true,
           plugins: {
-            legend: { position: 'top' },
+            legend: { position: 'right' },
             title: { display: true, text: 'Portfolio by Investment Type' },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const value = context.parsed;
+                  return `$${value.toFixed(2)}`;
+                },
+              },
+            },
           },
         },
       };
     }
 
-    chartInstanceRef.current = new Chart(ctx, chartConfig);
+    chartInstanceRef.current = new Chart(ctx, config);
 
     return () => {
       if (chartInstanceRef.current) {
@@ -95,8 +115,8 @@ const InvestmentChart = ({ investments, chartType }) => {
   }, [investments, chartType]);
 
   return (
-    <div className="bg-white shadow-sm rounded-md border p-4 mb-4">
-      <canvas ref={chartRef} />
+    <div className="bg-white shadow rounded-md border p-4 mb-6">
+      <canvas ref={chartRef} className="w-full h-96" />
     </div>
   );
 };
@@ -105,7 +125,5 @@ InvestmentChart.propTypes = {
   investments: PropTypes.array.isRequired,
   chartType: PropTypes.oneOf(['time', 'type']).isRequired,
 };
-
-const investmentTypes = ['stock', 'bond', 'mutual fund', 'ETF', 'real estate', 'crypto'];
 
 export default InvestmentChart;

@@ -1,402 +1,223 @@
-import { useState, useEffect, useCallback } from 'react';
-import investmentService from '../services/investmentService';
-import ErrorAlert from '../components/Budgets/ErrorAlert';
+import { useEffect, useState } from 'react';
+import {
+  getInvestments,
+  addInvestment,
+  updateInvestment,
+  deleteInvestment,
+  exportCSV,
+  exportPDF,
+} from '../services/investmentService';
+
 import CreateInvestmentModal from '../components/Investments/CreateInvestmentModal';
 import EditInvestmentModal from '../components/Investments/EditInvestmentModal';
 import DeleteInvestmentModal from '../components/Investments/DeleteInvestmentModal';
 import InvestmentChart from '../components/Investments/InvestmentChart';
 
-export const investmentTypes = ['stock', 'bond', 'mutual fund', 'ETF', 'real estate', 'crypto'];
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-export default function Investments() {
+const Investments = () => {
   const [investments, setInvestments] = useState([]);
-  const [filteredInvestments, setFilteredInvestments] = useState([]);
-  const [totalInvestments, setTotalInvestments] = useState(0);
-  const [error, setError] = useState(null);
-  const [openedCreate, setOpenedCreate] = useState(false);
-  const [openedEdit, setOpenedEdit] = useState(false);
-  const [openedDelete, setOpenedDelete] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [editingInvestment, setEditingInvestment] = useState(null);
-  const [deleteInvestmentId, setDeleteInvestmentId] = useState(null);
-  const [filterType, setFilterType] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [chartType, setChartType] = useState('time');
-  const investmentsPerPage = 10;
-
+  const [deletingInvestment, setDeletingInvestment] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState({
     name: '',
     type: '',
     initialInvestment: '',
     currentValue: '',
-    currency: 'USD',
-    institution: '',
-    purchaseDate: new Date().toISOString().split('T')[0],
-    notes: '',
-  });
-
-  const [editForm, setEditForm] = useState({
-    name: '',
-    type: '',
-    initialInvestment: '',
-    currentValue: '',
-    currency: 'USD',
+    currency: '',
     institution: '',
     purchaseDate: '',
     notes: '',
   });
+  const [chartType, setChartType] = useState('type');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const getUserFriendlyError = (err) => {
-    if (err.message.includes('404')) {
-      return 'Unable to load investments. The service is unavailable. Please try again later.';
-    } else if (err.message.includes('Session expired')) {
-      return 'Your session has expired. Please log in again.';
-    } else if (err.message.includes('Network Error')) {
-      return 'Unable to connect to the server. Please check your internet connection and try again.';
+  const limit = 10;
+
+  const fetchInvestments = async () => {
+    try {
+      setLoading(true);
+      const { investments, total } = await getInvestments(page, limit);
+      setInvestments(investments);
+      setTotal(total);
+    } catch (err) {
+      toast.error('Failed to load investments');
+    } finally {
+      setLoading(false);
     }
-    return 'An unexpected error occurred. Please try again later.';
   };
 
-  const fetchInvestments = useCallback(async () => {
-    try {
-      const { investments, total } = await investmentService.getInvestments({
-        page: currentPage,
-        limit: investmentsPerPage,
-      });
-      setInvestments(investments || []);
-      setFilteredInvestments(investments || []);
-      setTotalInvestments(total || 0);
-      console.log('Fetched investments:', investments);
-      setError(null);
-    } catch (err) {
-      console.error('Fetch investments error:', err);
-      setError(getUserFriendlyError(err));
-      setInvestments([]);
-      setFilteredInvestments([]);
-      setTotalInvestments(0);
-    }
-  }, [currentPage]);
+  useEffect(() => {
+    fetchInvestments();
+  }, [page]);
 
-  const handleCreateInvestment = useCallback(async () => {
-    if (!form.name || !form.type || !form.initialInvestment || !form.currentValue || !form.currency || !form.purchaseDate) {
-      setError('All required fields must be filled');
-      return;
-    }
+  const handleCreate = async () => {
     try {
-      await investmentService.addInvestment({
-        ...form,
-        initialInvestment: parseFloat(form.initialInvestment),
-        currentValue: parseFloat(form.currentValue),
-      });
-      await fetchInvestments();
+      await addInvestment(form);
+      toast.success('Investment added successfully');
+      fetchInvestments();
+      setShowCreateModal(false);
       setForm({
         name: '',
         type: '',
         initialInvestment: '',
         currentValue: '',
-        currency: 'USD',
-        institution: '',
-        purchaseDate: new Date().toISOString().split('T')[0],
-        notes: '',
-      });
-      setOpenedCreate(false);
-      setError(null);
-    } catch (err) {
-      console.error('Create investment error:', err);
-      setError(getUserFriendlyError(err));
-    }
-  }, [form, fetchInvestments]);
-
-  const handleEditInvestment = useCallback(async () => {
-    if (!editForm.name || !editForm.type || !editForm.initialInvestment || !editForm.currentValue || !editForm.currency || !editForm.purchaseDate) {
-      setError('All required fields must be filled');
-      return;
-    }
-    try {
-      await investmentService.updateInvestment(editingInvestment._id, {
-        ...editForm,
-        initialInvestment: parseFloat(editForm.initialInvestment),
-        currentValue: parseFloat(editForm.currentValue),
-      });
-      await fetchInvestments();
-      setEditForm({
-        name: '',
-        type: '',
-        initialInvestment: '',
-        currentValue: '',
-        currency: 'USD',
+        currency: '',
         institution: '',
         purchaseDate: '',
         notes: '',
       });
-      setOpenedEdit(false);
+    } catch {
+      toast.error('Failed to add investment');
+    }
+  };
+
+  const handleUpdate = async (id, updatedData) => {
+    try {
+      await updateInvestment(id, updatedData);
+      toast.success('Investment updated');
+      fetchInvestments();
       setEditingInvestment(null);
-      setError(null);
-    } catch (err) {
-      console.error('Error updating investment:', err);
-      setError(getUserFriendlyError(err));
+    } catch {
+      toast.error('Failed to update investment');
     }
-  }, [editForm, editingInvestment, fetchInvestments]);
+  };
 
-  const handleDeleteInvestment = useCallback(async () => {
+  const handleDelete = async (id) => {
     try {
-      await investmentService.deleteInvestment(deleteInvestmentId);
-      await fetchInvestments();
-      setOpenedDelete(false);
-      setDeleteInvestmentId(null);
-      setError(null);
-    } catch (err) {
-      console.error('Error deleting investment:', err);
-      setError(getUserFriendlyError(err));
+      await deleteInvestment(id);
+      toast.success('Investment deleted');
+      fetchInvestments();
+      setDeletingInvestment(null);
+    } catch {
+      toast.error('Failed to delete investment');
     }
-  }, [deleteInvestmentId, fetchInvestments]);
+  };
 
-  const handleExportCSV = useCallback(async (retries = 3) => {
-    try {
-      const response = await investmentService.exportToCSV();
-      const blob = new Blob([response.data], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'investments.csv';
-      a.click();
-      window.URL.revokeObjectURL(url);
-      setError(null);
-    } catch (err) {
-      console.error('Export investments error:', err);
-      if (err.message.includes('Session expired')) {
-        setError('Your session has expired. Please log in again.');
-      } else if (retries > 0) {
-        console.warn(`CSV export failed, retrying... (${retries} attempts left)`);
-        setTimeout(() => handleExportCSV(retries - 1), 1000);
-      } else {
-        setError('Unable to export investments to CSV. Please try again later.');
-      }
-    }
-  }, []);
+  const handleExportCSV = () => exportCSV();
+  const handleExportPDF = () => exportPDF();
 
-  const handleExportPDF = useCallback(async (retries = 3) => {
-    try {
-      const response = await investmentService.exportToPDF();
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'investments.pdf';
-      a.click();
-      window.URL.revokeObjectURL(url);
-      setError(null);
-    } catch (err) {
-      console.error('Export PDF error:', err);
-      if (err.message.includes('Session expired')) {
-        setError('Your session has expired. Please log in again.');
-      } else if (retries > 0) {
-        console.warn(`PDF export failed, retrying... (${retries} attempts left)`);
-        setTimeout(() => handleExportPDF(retries - 1), 1000);
-      } else {
-        setError('Unable to export investments to PDF. Please try again later.');
-      }
-    }
-  }, []);
-
-  const handleFilterType = useCallback((type) => {
-    setFilterType(type);
-    if (type && Array.isArray(investments)) {
-      setFilteredInvestments(investments.filter(inv => inv.type === type));
-    } else {
-      setFilteredInvestments(investments || []);
-    }
-  }, [investments]);
-
-  useEffect(() => {
-    fetchInvestments();
-  }, [fetchInvestments]);
-
-  useEffect(() => {
-    handleFilterType(filterType);
-  }, [investments, filterType, handleFilterType]);
-
-  const totalPages = Math.ceil(totalInvestments / investmentsPerPage);
-
-  const totalPortfolioValue = Array.isArray(filteredInvestments)
-    ? filteredInvestments.reduce((sum, inv) => sum + (inv.currentValue || 0), 0)
-    : 0;
-  const totalReturn = Array.isArray(filteredInvestments)
-    ? filteredInvestments.reduce((sum, inv) => {
-        const initial = inv.initialInvestment || 0;
-        const current = inv.currentValue || 0;
-        return sum + (initial > 0 ? ((current - initial) / initial) * 100 : 0);
-      }, 0) / (filteredInvestments.length || 1)
-    : 0;
+  const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">Investments</h2>
-      <ErrorAlert error={error} onClose={() => setError(null)} />
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Portfolio Performance</h3>
-          <div className="flex gap-2">
-            <button
-              className={`px-3 py-1 rounded-lg ${chartType === 'time' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-              onClick={() => setChartType('time')}
-            >
-              Time Series
-            </button>
-            <button
-              className={`px-3 py-1 rounded-lg ${chartType === 'type' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-              onClick={() => setChartType('type')}
-            >
-              By Type
-            </button>
-          </div>
+    <div className="p-4">
+      <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
+        <h1 className="text-2xl font-bold">Investments</h1>
+        <div className="flex gap-2">
+          <button onClick={handleExportCSV} className="bg-blue-500 text-white px-3 py-1 rounded">Export CSV</button>
+          <button onClick={handleExportPDF} className="bg-purple-500 text-white px-3 py-1 rounded">Export PDF</button>
+          <button onClick={() => setShowCreateModal(true)} className="bg-green-600 text-white px-3 py-1 rounded">+ Add Investment</button>
         </div>
-        <InvestmentChart investments={filteredInvestments || []} chartType={chartType} />
       </div>
-      <div className="mb-6 bg-white shadow-sm rounded-md border p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Portfolio Summary</h3>
-        <p className="text-gray-500">Total Value: ${totalPortfolioValue.toFixed(2)}</p>
-        <p className="text-gray-500">Average Return: {totalReturn.toFixed(2)}%</p>
-      </div>
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
+
+      <div className="mb-4 flex justify-end gap-2">
         <button
-          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg"
-          onClick={() => setOpenedCreate(true)}
+          className={`px-3 py-1 border rounded ${chartType === 'type' ? 'bg-blue-600 text-white' : ''}`}
+          onClick={() => setChartType('type')}
         >
-          Add Investment
-        </button>
-        <select
-          className="border rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={filterType}
-          onChange={(e) => handleFilterType(e.target.value)}
-          aria-label="Filter by investment type"
-        >
-          <option value="">All Types</option>
-          {investmentTypes.map(type => (
-            <option key={type} value={type}>{type}</option>
-          ))}
-        </select>
-        <button
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
-          onClick={() => handleExportCSV()}
-        >
-          Export CSV
+          Pie Chart
         </button>
         <button
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg"
-          onClick={() => handleExportPDF()}
+          className={`px-3 py-1 border rounded ${chartType === 'time' ? 'bg-blue-600 text-white' : ''}`}
+          onClick={() => setChartType('time')}
         >
-          Export PDF
+          Line Chart
         </button>
       </div>
-      {Array.isArray(filteredInvestments) && filteredInvestments.length > 0 ? (
-        <>
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+
+      <InvestmentChart investments={investments} chartType={chartType} />
+
+      {loading ? (
+        <p className="text-center text-gray-500">Loading...</p>
+      ) : (
+        <div className="overflow-x-auto border rounded">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Value</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Initial Investment</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return (%)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Currency</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Institution</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="p-2">Name</th>
+                <th className="p-2">Type</th>
+                <th className="p-2">Initial ($)</th>
+                <th className="p-2">Current ($)</th>
+                <th className="p-2">Currency</th>
+                <th className="p-2">Institution</th>
+                <th className="p-2">Purchase Date</th>
+                <th className="p-2">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredInvestments.map(investment => (
-                <tr key={investment._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{investment.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{investment.type}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${investment.currentValue.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${investment.initialInvestment.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {investment.initialInvestment > 0
-                      ? (((investment.currentValue - investment.initialInvestment) / investment.initialInvestment) * 100).toFixed(2)
-                      : '0.00'}%
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{investment.currency}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{investment.institution || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(investment.purchaseDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      className="text-indigo-600 hover:text-indigo-800 mr-2"
-                      onClick={() => {
-                        setEditingInvestment(investment);
-                        setEditForm({
-                          name: investment.name,
-                          type: investment.type,
-                          initialInvestment: investment.initialInvestment.toString(),
-                          currentValue: investment.currentValue.toString(),
-                          currency: investment.currency,
-                          institution: investment.institution || '',
-                          purchaseDate: new Date(investment.purchaseDate).toISOString().split('T')[0],
-                          notes: investment.notes || '',
-                        });
-                        setOpenedEdit(true);
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="text-red-600 hover:text-red-800"
-                      onClick={() => {
-                        setDeleteInvestmentId(investment._id);
-                        setOpenedDelete(true);
-                      }}
-                    >
-                      Delete
-                    </button>
+            <tbody>
+              {investments.map(inv => (
+                <tr key={inv._id} className="border-b">
+                  <td className="p-2">{inv.name}</td>
+                  <td className="p-2 capitalize">{inv.type}</td>
+                  <td className="p-2">${inv.initialInvestment.toFixed(2)}</td>
+                  <td className="p-2">${inv.currentValue.toFixed(2)}</td>
+                  <td className="p-2">{inv.currency}</td>
+                  <td className="p-2">{inv.institution || '-'}</td>
+                  <td className="p-2">{new Date(inv.purchaseDate).toLocaleDateString()}</td>
+                  <td className="p-2 flex gap-2">
+                    <button onClick={() => setEditingInvestment(inv)} className="text-blue-600">Edit</button>
+                    <button onClick={() => setDeletingInvestment(inv)} className="text-red-600">Delete</button>
                   </td>
                 </tr>
               ))}
+              {investments.length === 0 && (
+                <tr>
+                  <td colSpan="8" className="text-center py-4 text-gray-500">No investments found.</td>
+                </tr>
+              )}
             </tbody>
           </table>
-          <div className="mt-4 flex justify-between items-center">
-            <button
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg disabled:opacity-50"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </button>
-            <span className="text-gray-700">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg disabled:opacity-50"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </button>
-          </div>
-        </>
-      ) : (
-        <p className="text-gray-500">No investments found</p>
+        </div>
       )}
+
+      <div className="mt-4 flex justify-center gap-4">
+        <button
+          className="px-3 py-1 border rounded disabled:opacity-50"
+          disabled={page === 1}
+          onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+        >
+          Prev
+        </button>
+        <span className="text-sm mt-1">Page {page} of {totalPages}</span>
+        <button
+          className="px-3 py-1 border rounded disabled:opacity-50"
+          disabled={page === totalPages}
+          onClick={() => setPage(prev => prev + 1)}
+        >
+          Next
+        </button>
+      </div>
+
+      {/* Modals */}
       <CreateInvestmentModal
-        isOpen={openedCreate}
-        onClose={() => setOpenedCreate(false)}
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
         form={form}
         setForm={setForm}
-        onSubmit={handleCreateInvestment}
+        onSubmit={handleCreate}
       />
-      <EditInvestmentModal
-        isOpen={openedEdit}
-        onClose={() => setOpenedEdit(false)}
-        form={editForm}
-        setForm={setEditForm}
-        onSubmit={handleEditInvestment}
-      />
-      <DeleteInvestmentModal
-        isOpen={openedDelete}
-        onClose={() => setOpenedDelete(false)}
-        onConfirm={handleDeleteInvestment}
-      />
+
+      {editingInvestment && (
+        <EditInvestmentModal
+          investment={editingInvestment}
+          onClose={() => setEditingInvestment(null)}
+          onSave={handleUpdate}
+        />
+      )}
+
+      {deletingInvestment && (
+        <DeleteInvestmentModal
+          investment={deletingInvestment}
+          onClose={() => setDeletingInvestment(null)}
+          onConfirm={() => handleDelete(deletingInvestment._id)}
+        />
+      )}
     </div>
   );
-}
+};
+
+export default Investments;

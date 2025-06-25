@@ -1,134 +1,107 @@
+import React from 'react';
 import PropTypes from 'prop-types';
-import { investmentTypes } from '../../pages/Investments';
+import { investmentTypes } from '../../constants/investmentTypes';
 
-export default function EditInvestmentModal({ isOpen, onClose, form, setForm, onSubmit }) {
+const EditInvestmentModal = ({ isOpen, onClose, form, setForm, onSubmit }) => {
   if (!isOpen) return null;
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">Edit Investment</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-md w-full max-w-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Edit Investment</h2>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             onSubmit();
           }}
         >
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1">Name *</label>
+          <div className="grid grid-cols-1 gap-4">
             <input
               type="text"
-              name="name"
+              placeholder="Name"
               value={form.name}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
+              className="border p-2 rounded"
             />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1">Type *</label>
             <select
-              name="type"
               value={form.type}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
               required
+              className="border p-2 rounded"
             >
               <option value="">Select Type</option>
-              {investmentTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
+              {investmentTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
               ))}
             </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1">Initial Investment ($)*</label>
             <input
               type="number"
-              name="initialInvestment"
+              placeholder="Initial Investment"
               value={form.initialInvestment}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              step="0.01"
+              onChange={(e) => setForm({ ...form, initialInvestment: e.target.value })}
               required
+              className="border p-2 rounded"
             />
-          </div>
-          <div className="mb-4">
-ئے            <label className="block text-gray-700 mb-1">Current Value ($)*</label>
             <input
               type="number"
-              name="currentValue"
+              placeholder="Current Value"
               value={form.currentValue}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              step="0.01"
+              onChange={(e) => setForm({ ...form, currentValue: e.target.value })}
               required
+              className="border p-2 rounded"
             />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1">Currency *</label>
             <input
               type="text"
-              name="currency"
+              placeholder="Currency (e.g. USD)"
               value={form.currency}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setForm({ ...form, currency: e.target.value })}
               required
+              className="border p-2 rounded"
             />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1">Institution</label>
             <input
               type="text"
-              name="institution"
+              placeholder="Institution"
               value={form.institution}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setForm({ ...form, institution: e.target.value })}
+              className="border p-2 rounded"
             />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1">Purchase Date *</label>
             <input
               type="date"
-              name="purchaseDate"
               value={form.purchaseDate}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })}
               required
+              className="border p-2 rounded"
             />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1">Notes</label>
             <textarea
-              name="notes"
+              placeholder="Notes"
               value={form.notes}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              className="border p-2 rounded"
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="mt-6 flex justify-end gap-3">
             <button
               type="button"
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg"
               onClick={onClose}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
             >
-              Save
+              Update
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-}
+};
 
 EditInvestmentModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
@@ -137,3 +110,5 @@ EditInvestmentModal.propTypes = {
   setForm: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
 };
+
+export default EditInvestmentModal;

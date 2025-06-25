@@ -5,6 +5,7 @@
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^1.0.6",
     "@mantine/core": "^7.17.4",
     "@mantine/dates": "^7.17.5",
@@ -28,6 +29,8 @@
     "react-plaid-link": "^4.0.0",
     "react-router-dom": "^6.26.2",
     "react-script": "^2.0.5",
+    "react-toastify": "^11.0.5",
+    "recharts": "^3.0.0",
     "rimraf": "^6.0.1",
     "socket.io-client": "^4.8.0",
     "web-vitals": "^4.2.3"
