@@ -1,140 +1,209 @@
-import { categories } from '../../utils/budgetUtils';
+"use client"
+
+import { categories } from "../../utils/budgetUtils"
 
 export default function EditBudgetModal({ isOpen, onClose, form, setForm, onSubmit }) {
+  const inputClasses =
+    "w-full px-4 py-3 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+
+  const FormField = ({ label, children, required = false }) => (
+    <div className="space-y-2">
+      <label className="block text-sm font-semibold text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
+      {children}
+    </div>
+  )
+
+  if (!isOpen) return null
+
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 ${isOpen ? 'flex' : 'hidden'} items-center justify-center z-50 p-4`}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold mb-4">Edit Budget</h3>
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label htmlFor="editCategory" className="block mb-1 text-sm font-semibold text-gray-700">Category</label>
-            <select
-              id="editCategory"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select Category</option>
-              {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="editAmount" className="block mb-1 text-sm font-semibold text-gray-700">Amount</label>
-            <input
-              id="editAmount"
-              type="number"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0.00"
-              required
-              min="0"
-              step="0.01"
-            />
-          </div>
-          <div>
-            <label htmlFor="editCurrency" className="block mb-1 text-sm font-semibold text-gray-700">Currency</label>
-            <select
-              id="editCurrency"
-              value={form.currency}
-              onChange={(e) => setForm({ ...form, currency: e.target.value })}
-              className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="editPeriod" className="block mb-1 text-sm font-semibold text-gray-700">Period</label>
-            <select
-              id="editPeriod"
-              value={form.period}
-              onChange={(e) => setForm({ ...form, period: e.target.value })}
-              className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-          {form.period === 'custom' && (
-            <>
-              <div>
-                <label htmlFor="editStartDate" className="block mb-1 text-sm font-semibold text-gray-700">Start Date</label>
-                <input
-                  id="editStartDate"
-                  type="date"
-                  value={form.customPeriod.startDate}
-                  onChange={(e) => setForm({ ...form, customPeriod: { ...form.customPeriod, startDate: e.target.value } })}
-                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+        {/* Modal Header */}
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="bg-white bg-opacity-20 rounded-full p-2 mr-3">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
               </div>
               <div>
-                <label htmlFor="editEndDate" className="block mb-1 text-sm font-semibold text-gray-700">End Date</label>
-                <input
-                  id="editEndDate"
-                  type="date"
-                  value={form.customPeriod.endDate}
-                  onChange={(e) => setForm({ ...form, customPeriod: { ...form.customPeriod, endDate: e.target.value } })}
-                  className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+                <h3 className="text-xl font-bold text-white">Edit Budget</h3>
+                <p className="text-blue-100 text-sm">Update your budget settings</p>
               </div>
-            </>
-          )}
-          <div>
-            <label htmlFor="editRecurrence" className="block mb-1 text-sm font-semibold text-gray-700">Recurrence</label>
-            <select
-              id="editRecurrence"
-              value={form.recurrence}
-              onChange={(e) => setForm({ ...form, recurrence: e.target.value })}
-              className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors duration-200"
             >
-              <option value="none">None</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="editAlertThreshold" className="block mb-1 text-sm font-semibold text-gray-700">Alert Threshold (%)</label>
-            <input
-              id="editAlertThreshold"
-              type="number"
-              value={form.alertThreshold}
-              onChange={(e) => setForm({ ...form, alertThreshold: e.target.value })}
-              className="border rounded-lg w-full px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min="0"
-              max="100"
-              required
-              step="1"
-            />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
-            onClick={onSubmit}
-          >
-            Save
-          </button>
+
+        {/* Modal Body */}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField label="Category" required>
+              <select
+                id="editCategory"
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className={inputClasses}
+                required
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            <FormField label="Budget Amount" required>
+              <div className="relative">
+                <span className="absolute left-4 top-3.5 text-gray-500 font-medium">$</span>
+                <input
+                  id="editAmount"
+                  type="number"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  className={`${inputClasses} pl-8`}
+                  placeholder="0.00"
+                  required
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </FormField>
+
+            <FormField label="Currency" required>
+              <select
+                id="editCurrency"
+                value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                className={inputClasses}
+              >
+                <option value="USD">🇺🇸 USD - US Dollar</option>
+                <option value="EUR">🇪🇺 EUR - Euro</option>
+                <option value="GBP">🇬🇧 GBP - British Pound</option>
+              </select>
+            </FormField>
+
+            <FormField label="Budget Period" required>
+              <select
+                id="editPeriod"
+                value={form.period}
+                onChange={(e) => setForm({ ...form, period: e.target.value })}
+                className={inputClasses}
+                required
+              >
+                <option value="weekly">📅 Weekly</option>
+                <option value="monthly">🗓️ Monthly</option>
+                <option value="yearly">📆 Yearly</option>
+                <option value="custom">⚙️ Custom Period</option>
+              </select>
+            </FormField>
+
+            {form.period === "custom" && (
+              <>
+                <FormField label="Start Date" required>
+                  <input
+                    id="editStartDate"
+                    type="date"
+                    value={form.customPeriod.startDate}
+                    onChange={(e) =>
+                      setForm({ ...form, customPeriod: { ...form.customPeriod, startDate: e.target.value } })
+                    }
+                    className={inputClasses}
+                    required
+                  />
+                </FormField>
+
+                <FormField label="End Date" required>
+                  <input
+                    id="editEndDate"
+                    type="date"
+                    value={form.customPeriod.endDate}
+                    onChange={(e) =>
+                      setForm({ ...form, customPeriod: { ...form.customPeriod, endDate: e.target.value } })
+                    }
+                    className={inputClasses}
+                    required
+                  />
+                </FormField>
+              </>
+            )}
+
+            <FormField label="Recurrence">
+              <select
+                id="editRecurrence"
+                value={form.recurrence}
+                onChange={(e) => setForm({ ...form, recurrence: e.target.value })}
+                className={inputClasses}
+              >
+                <option value="none">🚫 None</option>
+                <option value="daily">📅 Daily</option>
+                <option value="weekly">🗓️ Weekly</option>
+                <option value="monthly">📆 Monthly</option>
+              </select>
+            </FormField>
+
+            <FormField label="Alert Threshold" required>
+              <div className="relative">
+                <input
+                  id="editAlertThreshold"
+                  type="number"
+                  value={form.alertThreshold}
+                  onChange={(e) => setForm({ ...form, alertThreshold: e.target.value })}
+                  className={`${inputClasses} pr-8`}
+                  min="0"
+                  max="100"
+                  required
+                  step="1"
+                  placeholder="80"
+                />
+                <span className="absolute right-4 top-3.5 text-gray-500 font-medium">%</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Get alerts when spending reaches this percentage</p>
+            </FormField>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
+            <button
+              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors duration-200"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 flex items-center"
+              onClick={onSubmit}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Save Changes
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

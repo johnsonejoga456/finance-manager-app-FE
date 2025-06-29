@@ -11,21 +11,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const fetchDashboardData = async () => {
-    try {
-      const data = await getDashboardSummary();
-      setOverview(data);
-    } catch (err) {
-      console.error('Fetch dashboard error:', err.message);
-      toast.error(err.message);
-      if (err.message.includes('Unauthorized')) {
-        navigate('/login');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -33,7 +18,23 @@ const Dashboard = () => {
       navigate('/login');
       return;
     }
-    fetchDashboardData();
+
+    const fetchData = async () => {
+      try {
+        const data = await getDashboardSummary();
+        setOverview(data);
+      } catch (err) {
+        console.error('Fetch dashboard error:', err.message);
+        toast.error(err.message);
+        if (err.message.includes('Unauthorized')) {
+          navigate('/login');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [navigate]);
 
   return (
