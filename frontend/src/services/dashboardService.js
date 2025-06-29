@@ -11,6 +11,7 @@ const getDashboardSummary = async () => {
     const response = await axios.get(`${API_URL}/summary`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    console.log('Dashboard summary fetched:', response.data);
     return response.data;
   } catch (err) {
     console.error('Dashboard summary error:', err.response?.data || err.message);
