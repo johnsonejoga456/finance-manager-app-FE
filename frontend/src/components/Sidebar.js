@@ -4,6 +4,7 @@ import { NavLink } from 'react-router-dom';
 const Sidebar = () => {
   const links = [
     { path: '/dashboard/overview', label: 'Overview' },
+    { path: '/dashboard/dashboard', label: 'Dashboard'},
     { path: '/dashboard/transactions', label: 'Transactions' },
     { path: '/dashboard/budgets', label: 'Budgets' },
     { path: '/dashboard/goals', label: 'Goals' },
