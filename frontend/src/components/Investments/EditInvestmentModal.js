@@ -1,114 +1,82 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { investmentTypes } from '../../constants/investmentTypes';
+"use client"
+import PropTypes from "prop-types"
+import { AlertTriangle, X, TrendingDown } from "lucide-react"
 
-const EditInvestmentModal = ({ isOpen, onClose, form, setForm, onSubmit }) => {
-  if (!isOpen) return null;
+const DeleteInvestmentModal = ({ isOpen, onClose, onConfirm, investmentName }) => {
+  if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-md w-full max-w-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Edit Investment</h2>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSubmit();
-          }}
-        >
-          <div className="grid grid-cols-1 gap-4">
-            <input
-              type="text"
-              placeholder="Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-              className="border p-2 rounded"
-            />
-            <select
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-              required
-              className="border p-2 rounded"
-            >
-              <option value="">Select Type</option>
-              {investmentTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              placeholder="Initial Investment"
-              value={form.initialInvestment}
-              onChange={(e) => setForm({ ...form, initialInvestment: e.target.value })}
-              required
-              className="border p-2 rounded"
-            />
-            <input
-              type="number"
-              placeholder="Current Value"
-              value={form.currentValue}
-              onChange={(e) => setForm({ ...form, currentValue: e.target.value })}
-              required
-              className="border p-2 rounded"
-            />
-            <input
-              type="text"
-              placeholder="Currency (e.g. USD)"
-              value={form.currency}
-              onChange={(e) => setForm({ ...form, currency: e.target.value })}
-              required
-              className="border p-2 rounded"
-            />
-            <input
-              type="text"
-              placeholder="Institution"
-              value={form.institution}
-              onChange={(e) => setForm({ ...form, institution: e.target.value })}
-              className="border p-2 rounded"
-            />
-            <input
-              type="date"
-              value={form.purchaseDate}
-              onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })}
-              required
-              className="border p-2 rounded"
-            />
-            <textarea
-              placeholder="Notes"
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="border p-2 rounded"
-            />
-          </div>
-          <div className="mt-6 flex justify-end gap-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-red-600 to-red-700 p-6 rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                <AlertTriangle className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Delete Investment</h2>
+                <p className="text-red-100">This action cannot be undone</p>
+              </div>
+            </div>
             <button
-              type="button"
               onClick={onClose}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded"
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Warning Message */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start space-x-3">
+              <TrendingDown className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-semibold text-red-800 mb-1">Permanent Deletion</h4>
+                <p className="text-red-700 text-sm">
+                  This will permanently delete the investment and all associated data. This action cannot be reversed.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-slate-700 mb-2">Are you sure you want to delete this investment?</p>
+
+          {investmentName && (
+            <div className="bg-slate-100 rounded-lg p-3 mb-6">
+              <p className="font-semibold text-slate-800">{investmentName}</p>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
+              onClick={onConfirm}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-lg"
             >
-              Update
+              Delete Investment
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-EditInvestmentModal.propTypes = {
+DeleteInvestmentModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  form: PropTypes.object.isRequired,
-  setForm: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-};
+  onConfirm: PropTypes.func.isRequired,
+  investmentName: PropTypes.string,
+}
 
-export default EditInvestmentModal;
+export default DeleteInvestmentModal
