@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useMemo } from "react"
 import PropTypes from "prop-types"
 import Chart from "chart.js/auto"
 import { TrendingUp, TrendingDown, Activity } from "lucide-react"
@@ -9,15 +9,21 @@ export default function BalanceChart({ transactions }) {
   const chartRef = useRef(null)
   const chartInstance = useRef(null)
 
+  // Memoizing safeTransactions to avoid unnecessary re-renders
+  const safeTransactions = useMemo(() => Array.isArray(transactions) ? transactions : [], [transactions])
+
   useEffect(() => {
-    if (!chartRef.current || !transactions || transactions.length === 0) return
+    if (!chartRef.current || safeTransactions.length === 0) return
 
     const ctx = chartRef.current.getContext("2d")
 
-    // Sort transactions by date
-    const sortedTransactions = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date))
+    const sortedTransactions = [...safeTransactions].sort(
+      (a, b) => new Date(a.date) - new Date(b.date)
+    )
 
-    const dates = sortedTransactions.map((tx) => new Date(tx.date).toLocaleDateString())
+    const dates = sortedTransactions.map((tx) =>
+      new Date(tx.date).toLocaleDateString()
+    )
     const balances = sortedTransactions.reduce((acc, tx, idx) => {
       const prevBalance = idx === 0 ? 0 : acc[idx - 1]
       acc.push(prevBalance + (tx.type === "income" ? tx.amount : -tx.amount))
@@ -61,9 +67,7 @@ export default function BalanceChart({ transactions }) {
           mode: "index",
         },
         plugins: {
-          legend: {
-            display: false,
-          },
+          legend: { display: false },
           tooltip: {
             backgroundColor: "rgba(0, 0, 0, 0.8)",
             titleColor: "#ffffff",
@@ -86,13 +90,8 @@ export default function BalanceChart({ transactions }) {
               color: "#6B7280",
               font: { size: 12, weight: "600" },
             },
-            grid: {
-              color: "rgba(0, 0, 0, 0.05)",
-            },
-            ticks: {
-              color: "#6B7280",
-              font: { size: 11 },
-            },
+            grid: { color: "rgba(0, 0, 0, 0.05)" },
+            ticks: { color: "#6B7280", font: { size: 11 } },
           },
           y: {
             title: {
@@ -102,9 +101,7 @@ export default function BalanceChart({ transactions }) {
               font: { size: 12, weight: "600" },
             },
             beginAtZero: false,
-            grid: {
-              color: "rgba(0, 0, 0, 0.05)",
-            },
+            grid: { color: "rgba(0, 0, 0, 0.05)" },
             ticks: {
               color: "#6B7280",
               font: { size: 11 },
@@ -120,13 +117,14 @@ export default function BalanceChart({ transactions }) {
         chartInstance.current.destroy()
       }
     }
-  }, [transactions])
+  }, [safeTransactions])
 
-  // Calculate balance statistics
   const getBalanceStats = () => {
-    if (!transactions || transactions.length === 0) return null
+    if (safeTransactions.length === 0) return null
 
-    const sortedTransactions = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date))
+    const sortedTransactions = [...safeTransactions].sort(
+      (a, b) => new Date(a.date) - new Date(b.date)
+    )
     const balances = sortedTransactions.reduce((acc, tx, idx) => {
       const prevBalance = idx === 0 ? 0 : acc[idx - 1]
       acc.push(prevBalance + (tx.type === "income" ? tx.amount : -tx.amount))
@@ -173,12 +171,12 @@ export default function BalanceChart({ transactions }) {
             >
               {stats.isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
               <span>
-                {stats.isPositive ? "+" : ""}$
-                {Math.abs(stats.change).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                {stats.isPositive ? "+" : "-"}${
+                  Math.abs(stats.change).toLocaleString("en-US", { minimumFractionDigits: 2 })
+                }
                 {stats.changePercent !== 0 && (
                   <span className="ml-1">
-                    ({stats.isPositive ? "+" : ""}
-                    {stats.changePercent.toFixed(1)}%)
+                    ({stats.isPositive ? "+" : ""}{stats.changePercent.toFixed(1)}%)
                   </span>
                 )}
               </span>
@@ -187,7 +185,7 @@ export default function BalanceChart({ transactions }) {
         )}
       </div>
 
-      {transactions && transactions.length > 0 ? (
+      {safeTransactions.length > 0 ? (
         <div className="h-80">
           <canvas ref={chartRef} />
         </div>
@@ -211,6 +209,6 @@ BalanceChart.propTypes = {
       type: PropTypes.string.isRequired,
       amount: PropTypes.number.isRequired,
       date: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
 }

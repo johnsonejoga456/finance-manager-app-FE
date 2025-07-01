@@ -4,27 +4,6 @@ import { Twitter, Instagram, Facebook, Mail, Phone, MapPin, Shield, FileText, He
 const Footer = () => {
   const currentYear = new Date().getFullYear()
 
-  const footerLinks = {
-    product: [
-      { name: "Features", href: "/features" },
-      { name: "Pricing", href: "/pricing" },
-      { name: "Security", href: "/security" },
-      { name: "Updates", href: "/updates" },
-    ],
-    support: [
-      { name: "Help Center", href: "/help" },
-      { name: "Contact Us", href: "/contact" },
-      { name: "Documentation", href: "/docs" },
-      { name: "API Reference", href: "/api" },
-    ],
-    legal: [
-      { name: "Privacy Policy", href: "/privacy-policy" },
-      { name: "Terms of Service", href: "/terms-of-service" },
-      { name: "Cookie Policy", href: "/cookies" },
-      { name: "Compliance", href: "/compliance" },
-    ],
-  }
-
   const socialLinks = [
     {
       name: "Twitter",
@@ -50,99 +29,35 @@ const Footer = () => {
     <footer className="bg-gray-900 text-white">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-          {/* Brand Section */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg">
-                <Wallet className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">Finance Manager</h3>
-                <p className="text-sm text-gray-400">Personal Finance Made Simple</p>
-              </div>
+        {/* Brand Section */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg">
+              <Wallet className="w-6 h-6 text-white" />
             </div>
-            <p className="text-gray-400 mb-6 max-w-md">
-              Take control of your financial future with our comprehensive personal finance management platform. Track
-              expenses, manage budgets, and achieve your financial goals with confidence.
-            </p>
-
-            {/* Contact Info */}
-            <div className="space-y-2 text-sm text-gray-400">
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                <span>support@financemanager.com</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                <span>+1 (555) 123-4567</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                <span>San Francisco, CA</span>
-              </div>
+            <div>
+              <h3 className="text-xl font-bold">Finance Manager</h3>
+              <p className="text-sm text-gray-400">Personal Finance Made Simple</p>
             </div>
           </div>
+          <p className="text-gray-400 mb-6 max-w-md">
+            Take control of your financial future with our comprehensive personal finance management platform. Track
+            expenses, manage budgets, and achieve your financial goals with confidence.
+          </p>
 
-          {/* Product Links */}
-          <div>
-            <h4 className="font-semibold mb-4 text-white">Product</h4>
-            <ul className="space-y-3">
-              {footerLinks.product.map((link) => (
-                <li key={link.name}>
-                  <Link to={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Support Links */}
-          <div>
-            <h4 className="font-semibold mb-4 text-white">Support</h4>
-            <ul className="space-y-3">
-              {footerLinks.support.map((link) => (
-                <li key={link.name}>
-                  <Link to={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal Links */}
-          <div>
-            <h4 className="font-semibold mb-4 text-white">Legal</h4>
-            <ul className="space-y-3">
-              {footerLinks.legal.map((link) => (
-                <li key={link.name}>
-                  <Link to={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Newsletter Signup */}
-        <div className="mt-12 pt-8 border-t border-gray-800">
-          <div className="max-w-md">
-            <h4 className="font-semibold mb-2 text-white">Stay Updated</h4>
-            <p className="text-gray-400 text-sm mb-4">
-              Get the latest financial tips and product updates delivered to your inbox.
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-              />
-              <button className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all font-medium">
-                Subscribe
-              </button>
+          {/* Contact Info */}
+          <div className="space-y-2 text-sm text-gray-400">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              <span>support@financemanager.com</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              <span>+1 (555) 123-4567</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              <span>San Francisco, CA</span>
             </div>
           </div>
         </div>

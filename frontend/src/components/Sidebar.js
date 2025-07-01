@@ -73,12 +73,7 @@ const Sidebar = () => {
       icon: TrendingUp,
       description: "Investment portfolio",
     },
-    {
-      path: "/dashboard/reports",
-      label: "Reports",
-      icon: FileText,
-      description: "Financial reports",
-    },
+
     {
       path: "/settings",
       label: "Settings",
@@ -154,21 +149,6 @@ const Sidebar = () => {
           })}
         </ul>
       </nav>
-
-      {/* Footer */}
-      <div className={`p-4 border-t border-gray-700 ${isCollapsed ? "px-2" : ""}`}>
-        <div className="flex items-center gap-3 text-gray-400">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-medium">U</span>
-          </div>
-          {!isCollapsed && (
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">User Account</p>
-              <p className="text-xs text-gray-400">user@example.com</p>
-            </div>
-          )}
-        </div>
-      </div>
     </>
   )
 

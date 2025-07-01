@@ -17,7 +17,8 @@ const accountService = {
       console.log('Fetching accounts');
       const response = await axios.get(API_URL, { headers: getAuthHeader() });
       console.log('Accounts response:', response.data);
-      return response;
+      const { accounts, total } = response.data.data || { accounts: [], total: 0 };
+      return { accounts, total };
     } catch (error) {
       console.error('Error fetching accounts:', error.message);
       if (error.response?.status === 401) {
@@ -25,7 +26,7 @@ const accountService = {
       }
       throw new Error(`Failed to fetch accounts: ${error.message}`);
     }
-  },
+},
   addAccount: async (accountData) => {
     try {
       console.log('Adding account:', accountData);

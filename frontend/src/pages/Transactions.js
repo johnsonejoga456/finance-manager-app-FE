@@ -132,9 +132,8 @@ export default function Transactions() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const response = await accountService.getAccounts()
-      const fetchedAccounts = response.data.data || []
-      setAccounts(fetchedAccounts)
+      const { accounts: fetchedAccounts } = await accountService.getAccounts()
+      setAccounts(fetchedAccounts);
       console.log("Fetched accounts:", fetchedAccounts)
       setError(null)
     } catch (error) {
