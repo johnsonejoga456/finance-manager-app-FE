@@ -4,12 +4,12 @@ import PropTypes from "prop-types";
 
 const currencies = ["USD", "EUR", "GBP"];
 
-export default function TransactionModals({
-  openedAdd,
-  closeAdd,
+export default function EditTransactionModals({
+  openedEdit,
+  closeEdit,
   form,
   setForm,
-  handleAddTransaction,
+  handleEditTransaction,
   categories,
   subTypes,
   accounts,
@@ -33,8 +33,8 @@ export default function TransactionModals({
 
   return (
     <>
-      {/* Add Transaction Modal */}
-      {openedAdd && (
+      {/* Edit Transaction Modal */}
+      {openedEdit && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
@@ -46,11 +46,11 @@ export default function TransactionModals({
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Add New Transaction</h3>
-                  <p className="text-emerald-100 text-sm">Record your income, expense, or transfer</p>
+                  <h3 className="text-xl font-bold text-white">Edit Transaction</h3>
+                  <p className="text-emerald-100 text-sm">Modify your transaction details</p>
                 </div>
               </div>
-              <button onClick={closeAdd} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition">
+              <button onClick={closeEdit} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -62,7 +62,7 @@ export default function TransactionModals({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  handleAddTransaction({
+                  handleEditTransaction({
                     ...form,
                     amount: Number(form.amount),
                   });
@@ -210,7 +210,7 @@ export default function TransactionModals({
                   <button
                     type="button"
                     className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition"
-                    onClick={closeAdd}
+                    onClick={closeEdit}
                   >
                     Cancel
                   </button>
@@ -221,7 +221,7 @@ export default function TransactionModals({
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Add Transaction
+                    Save Changes
                   </button>
                 </div>
               </form>
@@ -233,12 +233,12 @@ export default function TransactionModals({
   );
 }
 
-TransactionModals.propTypes = {
-  openedAdd: PropTypes.bool.isRequired,
-  closeAdd: PropTypes.func.isRequired,
+EditTransactionModals.propTypes = {
+  openedEdit: PropTypes.bool.isRequired,
+  closeEdit: PropTypes.func.isRequired,
   form: PropTypes.object.isRequired,
   setForm: PropTypes.func.isRequired,
-  handleAddTransaction: PropTypes.func.isRequired,
+  handleEditTransaction: PropTypes.func.isRequired,
   categories: PropTypes.arrayOf(PropTypes.string).isRequired,
   subTypes: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
   accounts: PropTypes.arrayOf(

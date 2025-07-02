@@ -1,5 +1,3 @@
-"use client"
-
 export default function DeleteBudgetModal({ isOpen, onClose, onConfirm }) {
   if (!isOpen) return null
 

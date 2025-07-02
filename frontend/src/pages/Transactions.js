@@ -6,6 +6,8 @@ import accountService from "../services/accountService"
 import TransactionFilters from "../components/Transactions/TransactionFilters"
 import TransactionList from "../components/Transactions/TransactionList"
 import TransactionModals from "../components/Transactions/TransactionModals"
+import EditTransactionModals from "../components/Transactions/EditTransactionModals"
+import DeleteTransactionModals from "../components/Transactions/DeleteTransactionModals"
 import TransactionSummary from "../components/Transactions/TransactionSummary"
 import SpendingAlerts from "../components/Transactions/SpendingAlerts"
 import BalanceChart from "../components/Accounts/BalanceChart"
@@ -92,43 +94,46 @@ export default function Transactions() {
     account: "",
   })
 
-  const fetchTransactions = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const params = {
-        page: currentPage,
-        limit: transactionsPerPage,
-      }
+ const fetchTransactions = useCallback(async () => {
+  try {
+    setIsLoading(true);
+    const params = {
+      page: currentPage,
+      limit: transactionsPerPage,
+    };
 
-      if (filterCategory) params.category = filterCategory
-      if (filterStartDate) params.startDate = filterStartDate
-      if (filterEndDate) params.endDate = filterEndDate
-      if (filterNotes) params.query = filterNotes
-      if (filterType) params.type = filterType
-      if (filterTags) params.tags = filterTags
+    if (filterCategory) params.category = filterCategory;
+    if (filterStartDate) params.startDate = filterStartDate;
+    if (filterEndDate) params.endDate = filterEndDate;
+    if (filterNotes) params.query = filterNotes;
+    if (filterType) params.type = filterType;
+    if (filterTags) params.tags = filterTags;
 
-      const response = await transactionService.getTransactions(params)
-      const { data, total } = response.data
+    const response = await transactionService.getTransactions(params);
 
-      setTransactions(data || [])
-      setTotalTransactions(total || 0)
-      calculateSummary(data || [])
-      calculateCategorySummary(data || [])
-      checkSpendingAlerts(data || [])
-      setError(null)
-    } catch (error) {
-      if (error.message.includes("Session expired")) {
-        setError("Session expired. Please log in again.")
-      } else {
-        setError("Failed to fetch transactions. Please try again.")
-      }
-      console.error("Fetch transactions error:", error.message)
-      setTransactions([])
-      setTotalTransactions(0)
-    } finally {
-      setIsLoading(false)
+    // ✅ Correct extraction:
+    const { transactions: fetchedTransactions, total } = response.data.data;
+
+    setTransactions(fetchedTransactions || []);
+    setTotalTransactions(total || 0);
+    calculateSummary(fetchedTransactions || []);
+    calculateCategorySummary(fetchedTransactions || []);
+    checkSpendingAlerts(fetchedTransactions || []);
+    setError(null);
+  } catch (error) {
+    if (error.message.includes("Session expired")) {
+      setError("Session expired. Please log in again.");
+    } else {
+      setError("Failed to fetch transactions. Please try again.");
     }
-  }, [filterCategory, filterStartDate, filterEndDate, filterNotes, filterType, filterTags, currentPage])
+    console.error("Fetch transactions error:", error.message);
+    setTransactions([]);
+    setTotalTransactions(0);
+  } finally {
+    setIsLoading(false);
+  }
+}, [filterCategory, filterStartDate, filterEndDate, filterNotes, filterType, filterTags, currentPage]);
+
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -418,21 +423,31 @@ export default function Transactions() {
         <TransactionModals
           openedAdd={openedAdd}
           closeAdd={() => setOpenedAdd(false)}
-          openedEdit={openedEdit}
-          closeEdit={() => setOpenedEdit(false)}
-          openedDelete={openedDelete}
-          closeDelete={() => setOpenedDelete(false)}
           form={form}
           setForm={setForm}
-          editForm={editForm}
-          setEditForm={setEditForm}
-          editTransaction={editTransaction}
           handleAddTransaction={handleAddTransaction}
-          handleEditTransaction={handleEditTransaction}
-          handleDeleteTransaction={handleDeleteTransaction}
           categories={categories}
           subTypes={subTypes}
           accounts={accounts}
+        />
+
+        <EditTransactionModals
+          openedEdit={openedEdit}
+          closeEdit={() => setOpenedEdit(false)}
+          editForm={editForm}
+          setEditForm={setEditForm}
+          editTransaction={editTransaction}
+          handleEditTransaction={handleEditTransaction}
+          categories={categories}
+          subTypes={subTypes}
+          accounts={accounts}
+        />
+
+        <DeleteTransactionModals
+          openedDelete={openedDelete}
+          closeDelete={() => setOpenedDelete(false)}
+          handleDeleteTransaction={handleDeleteTransaction}
+          transactionToDelete={transactions.find(t => t._id === deleteTransactionId) || null}
         />
       </div>
     </div>
