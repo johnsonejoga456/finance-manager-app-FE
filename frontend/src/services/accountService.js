@@ -1,86 +1,99 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/accounts';
+const API_URL = `${process.env.REACT_APP_API_URL}/accounts`;
 
-const getAuthHeader = () => {
+// Axios instance with interceptors
+const API = axios.create({
+  baseURL: API_URL,
+});
+
+// Attach token automatically
+API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (!token) {
-    console.warn('No JWT token found in localStorage. Please log in.');
-    return {};
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+    console.log('[API] Attached Authorization header.');
   }
-  return { Authorization: `Bearer ${token}` };
-};
+  console.log('[API] Request:', config);
+  return config;
+});
+
+// Handle 401 globally
+API.interceptors.response.use(
+  (response) => {
+    console.log('[API] Response:', response);
+    return response;
+  },
+  (error) => {
+    console.error('[API] Error response:', error.response?.data || error.message);
+    if (error.response?.status === 401) {
+      console.warn('Session expired or unauthorized. Redirecting to login.');
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 const accountService = {
   getAccounts: async () => {
     try {
-      console.log('Fetching accounts');
-      const response = await axios.get(API_URL, { headers: getAuthHeader() });
-      console.log('Accounts response:', response.data);
+      console.log('[accountService] Fetching accounts...');
+      const response = await API.get('/');
+      console.log('[accountService] Accounts response:', response.data);
       const { accounts, total } = response.data.data || { accounts: [], total: 0 };
       return { accounts, total };
     } catch (error) {
-      console.error('Error fetching accounts:', error.message);
-      if (error.response?.status === 401) {
-        throw new Error('Session expired. Please log in again.');
-      }
-      throw new Error(`Failed to fetch accounts: ${error.message}`);
+      console.error('[accountService] Error fetching accounts:', error.response?.data || error.message);
+      throw error;
     }
-},
+  },
+
   addAccount: async (accountData) => {
     try {
-      console.log('Adding account:', accountData);
-      const response = await axios.post(API_URL, accountData, { headers: getAuthHeader() });
-      console.log('Add account response:', response.data);
-      return response;
+      console.log('[accountService] Adding account:', accountData);
+      const response = await API.post('/', accountData);
+      console.log('[accountService] Add account response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('Error adding account:', error.message);
-      if (error.response?.status === 401) {
-        throw new Error('Session expired. Please log in again.');
-      }
-      throw new Error(`Failed to add account: ${error.message}`);
+      console.error('[accountService] Error adding account:', error.response?.data || error.message);
+      throw error;
     }
   },
+
   updateAccount: async (id, data) => {
     try {
-      console.log(`Updating account ${id}:`, data);
-      const response = await axios.put(`${API_URL}/${id}`, data, { headers: getAuthHeader() });
-      console.log('Update account response:', response.data);
-      return response;
+      console.log(`[accountService] Updating account ${id}:`, data);
+      const response = await API.put(`/${id}`, data);
+      console.log('[accountService] Update account response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('Error updating account:', error.message);
-      if (error.response?.status === 401) {
-        throw new Error('Session expired. Please log in again.');
-      }
-      throw new Error(`Failed to update account: ${error.message}`);
+      console.error('[accountService] Error updating account:', error.response?.data || error.message);
+      throw error;
     }
   },
+
   deleteAccount: async (id) => {
     try {
-      console.log(`Deleting account ${id}`);
-      const response = await axios.delete(`${API_URL}/${id}`, { headers: getAuthHeader() });
-      console.log('Delete account response:', response.data);
-      return response;
+      console.log(`[accountService] Deleting account ${id}`);
+      const response = await API.delete(`/${id}`);
+      console.log('[accountService] Delete account response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('Error deleting account:', error.message);
-      if (error.response?.status === 401) {
-        throw new Error('Session expired. Please log in again.');
-      }
-      throw new Error(`Failed to delete account: ${error.message}`);
+      console.error('[accountService] Error deleting account:', error.response?.data || error.message);
+      throw error;
     }
   },
+
   getAccountTransactions: async (id, params = {}) => {
     try {
-      console.log(`Fetching transactions for account ${id}`, params);
-      const response = await axios.get(`${API_URL}/${id}/transactions`, { headers: getAuthHeader(), params });
-      console.log('Account transactions response:', response.data);
-      return response;
+      console.log(`[accountService] Fetching transactions for account ${id} with params:`, params);
+      const response = await API.get(`/${id}/transactions`, { params });
+      console.log('[accountService] Account transactions response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('Error fetching account transactions:', error.message);
-      if (error.response?.status === 401) {
-        throw new Error('Session expired. Please log in again.');
-      }
-      throw new Error(`Failed to fetch account transactions: ${error.message}`);
+      console.error('[accountService] Error fetching account transactions:', error.response?.data || error.message);
+      throw error;
     }
   },
 };
