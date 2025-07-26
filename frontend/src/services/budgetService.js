@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = `${process.env.REACT_APP_API_URL}/budgets`;
+// ✅ Safely handle local vs production
+const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = `${baseURL}/budgets`;
 
 // Create reusable axios instance
 const API = axios.create({
