@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-const API_URL = `${process.env.REACT_APP_API_URL}/accounts`;
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Axios instance with interceptors
+const BASE_URL = process.env.REACT_APP_API_URL || (isDevelopment ? 'http://localhost:5000/api' : '');
+
 const API = axios.create({
-  baseURL: API_URL,
+  baseURL: `${BASE_URL}/accounts`,
 });
 
 // Attach token automatically
