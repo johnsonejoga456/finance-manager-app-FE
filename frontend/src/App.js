@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import io from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
@@ -22,15 +22,20 @@ function App() {
   const { user, loading } = useContext(AuthContext);
 
   useEffect(() => {
-    // Connect to Socket.IO server if the user is logged in
     if (user) {
-      const socket = io('http://localhost:5000');
+      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const socketUrl = apiUrl.replace(/\/api\/?$/, ''); // removes /api or /api/ from end
+
+      const socket = io(socketUrl, {
+        transports: ['websocket'],
+        withCredentials: true,
+      });
 
       socket.on('transactionReminder', (data) => {
         addNotification(data.message, 'warning');
       });
 
-      return () => socket.disconnect(); // Cleanup socket connection on unmount
+      return () => socket.disconnect(); // cleanup
     }
   }, [user]);
 
@@ -53,7 +58,6 @@ function App() {
           {user && <Sidebar />}
           <div className="flex-1">
             <main className="p-6">
-              {/* Notifications */}
               {notifications.map((notification, index) => (
                 <Notification
                   key={index}
@@ -63,55 +67,18 @@ function App() {
                 />
               ))}
 
-              {/* App Routes */}
               <Routes>
-                {/* Authentication Routes */}
                 <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard/overview" />} />
                 <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard/overview" />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
-
-                {/* Dashboard Routes */}
-                <Route
-                  path="/dashboard/overview"
-                  element={user ? <Overview /> : <Navigate to="/register" />}
-                />
-
-              <Route
-                  path="/dashboard/dashboard"
-                  element={user ? <Dashboard /> : <Navigate to="/register" />}
-                />
-
-              <Route
-                  path="/dashboard/accounts"
-                  element={user ? <Accounts /> : <Navigate to="/register" />}
-                />
-
-                <Route
-                  path="/dashboard/goals"
-                  element={user ? <Goals /> : <Navigate to="/register" />}
-                />
-
-              <Route
-                  path="/dashboard/debts"
-                  element={user ? <Debts /> : <Navigate to="/register" />}
-                />
-
-                <Route
-                  path="/dashboard/transactions"
-                  element={user ? <Transactions /> : <Navigate to="/register" />}
-                />
-
-                <Route
-                  path="/dashboard/budgets"
-                  element={user ? <Budgets /> : <Navigate to="/register" />}
-                />
-
-              <Route
-                  path="/dashboard/investments"
-                  element={user ? <Investments /> : <Navigate to="/register" />}
-                />
-
-                {/* Default Route */}
+                <Route path="/dashboard/overview" element={user ? <Overview /> : <Navigate to="/register" />} />
+                <Route path="/dashboard/dashboard" element={user ? <Dashboard /> : <Navigate to="/register" />} />
+                <Route path="/dashboard/accounts" element={user ? <Accounts /> : <Navigate to="/register" />} />
+                <Route path="/dashboard/goals" element={user ? <Goals /> : <Navigate to="/register" />} />
+                <Route path="/dashboard/debts" element={user ? <Debts /> : <Navigate to="/register" />} />
+                <Route path="/dashboard/transactions" element={user ? <Transactions /> : <Navigate to="/register" />} />
+                <Route path="/dashboard/budgets" element={user ? <Budgets /> : <Navigate to="/register" />} />
+                <Route path="/dashboard/investments" element={user ? <Investments /> : <Navigate to="/register" />} />
                 <Route path="/" element={<Navigate to="/register" />} />
               </Routes>
             </main>
@@ -123,7 +90,6 @@ function App() {
   );
 }
 
-// Wrap App with AuthProvider
 const AppWrapper = () => (
   <AuthProvider>
     <App />
