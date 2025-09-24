@@ -1,1 +1,1 @@
-A finance manager application
+
